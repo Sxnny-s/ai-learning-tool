@@ -12,11 +12,11 @@ export async function GET() {
 
   
 //
-  const res = []
+  const res: Array<{user_id: string, name: string, total_sessions: number, avg_session_length: number, last_active_at: string}> = []
 
 
   data.forEach(student => {
-    const studentObject = {
+    const studentObject: {user_id: string, name: string, total_sessions: number, avg_session_length: number, last_active_at: string} = {
       user_id: student['user_id'],
       name: student['full_name'],
       total_sessions: student['session_count'],
@@ -28,9 +28,6 @@ export async function GET() {
   })
   
 
- 
   return new Response(JSON.stringify({data: res}), { status: 200 })
   
-
-
 }
