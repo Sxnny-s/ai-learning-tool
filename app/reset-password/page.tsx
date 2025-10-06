@@ -3,22 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-/**
- * Custom password reset flow (email version).
- * Backend endpoints only enforce rate limits; the actual reset is done with
- * Clerk's client hook `useSignIn()` per Clerk docs.
- *
- * Steps:
- * 1) User enters their email and clicks "Send code".
- *    - We POST to /api/auth/request-password-reset to apply per-IP/per-email RL.
- *    - If allowed, we call signIn.create({ strategy: 'reset_password_email_code', identifier })
- *      which triggers Clerk to email the code.
- * 2) User enters received code + a new password.
- *    - We POST to /api/auth/reset-password/verify to apply per-email RL for attempts.
- *    - If allowed, we call signIn.attemptFirstFactor({ strategy, code, password }).
- *    - On success, Clerk completes sign-in; we set the active session and redirect.
- */
+function getClerkErrorMessage(err: unknown): string {
+  // Clerk errors often look like: { errors: [{ longMessage?: string, message?: string }] }
+  if (typeof err === 'object' && err !== null && 'errors' in err) {
+    const e = (err as { errors?: Array<{ longMessage?: string; message?: string }> }).errors;
+    const first = Array.isArray(e) ? e[0] : undefined;
+    return first?.longMessage ?? first?.message ?? 'Something went wrong';
+  }
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong';
+}
+
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -41,7 +38,7 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError('');
 
-    // 1) Hit your RL endpoint (public)
+    // Backend rate limit gate
     const rlRes = await fetch('/api/auth/request-password-reset', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -49,21 +46,19 @@ export default function ResetPasswordPage() {
     });
 
     if (!rlRes.ok) {
-      const data = await rlRes.json().catch(() => ({}));
-      setError(data?.error || 'Please try again later.');
+      const data = (await rlRes.json().catch(() => ({}))) as { error?: string };
+      setError(data?.error ?? 'Please try again later.');
       return;
     }
 
-    // 2) Ask Clerk to send the reset code (provider API via client hook)
     try {
       await signIn?.create({
         strategy: 'reset_password_email_code',
         identifier: email,
       });
       setStage('verify');
-    } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage ?? 'Failed to send code';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(getClerkErrorMessage(err));
     }
   }
 
@@ -71,7 +66,7 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError('');
 
-    // 1) Hit your RL endpoint for verification attempts
+    // Backend rate limit gate
     const rlRes = await fetch('/api/auth/reset-password/verify', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -79,12 +74,11 @@ export default function ResetPasswordPage() {
     });
 
     if (!rlRes.ok) {
-      const data = await rlRes.json().catch(() => ({}));
-      setError(data?.error || 'Please try again later.');
+      const data = (await rlRes.json().catch(() => ({}))) as { error?: string };
+      setError(data?.error ?? 'Please try again later.');
       return;
     }
 
-    // 2) Attempt factor with code + new password
     try {
       const result = await signIn?.attemptFirstFactor({
         strategy: 'reset_password_email_code',
@@ -108,9 +102,8 @@ export default function ResetPasswordPage() {
       }
 
       setError('Unexpected status. Please try again.');
-    } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage ?? 'Reset failed';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(getClerkErrorMessage(err));
     }
   }
 
@@ -167,7 +160,10 @@ export default function ResetPasswordPage() {
       )}
 
       <p className="text-sm">
-        Remembered it? <a href="/sign-in" className="underline">Back to sign in</a>
+        Remembered it?{' '}
+        <Link href="/sign-in" className="underline">
+          Back to sign in
+        </Link>
       </p>
     </div>
   );

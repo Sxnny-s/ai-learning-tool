@@ -1,4 +1,5 @@
 import { SignIn } from '@clerk/nextjs';
+import Link from 'next/link';
 
 export default function Page() {
   return (
@@ -11,9 +12,9 @@ export default function Page() {
         appearance={{ elements: { formButtonPrimary: "bg-red-600 hover:bg-red-700" } }}
       />
       <div className="text-sm">
-        <a href="/reset-password" className="underline">
+        <Link href="/reset-password" className="underline">
           Forgot your password? Use the reset page
-        </a>
+        </Link>
       </div>
     </div>
   );

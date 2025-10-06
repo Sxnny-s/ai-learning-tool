@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
-// If your @ alias currently prefers the *root* lib/, use a relative import temporarily:
-// import { rateLimit } from "../../../../src/lib/middleware/rate-limit";
 import { rateLimit } from "@/lib/middleware/rate-limit";
 
 const RULE_PER_IP    = { windowMs: 60_000,      max: 10 }; // 10/min/IP
@@ -45,7 +43,7 @@ export async function POST(req: NextRequest) {
   // Ask Clerk (provider API) to send reset code
   try {
     const client = await clerkClient();
-    const signInAttempt = await client.signIns.create({
+    const signInAttempt = await client.signIn.create({
       identifier: email,
       strategy: 'reset_password_email_code',
     });
@@ -56,11 +54,12 @@ export async function POST(req: NextRequest) {
 
     // Always respond success to avoid revealing if email exists
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    const status = err?.status || err?.response?.status;
+  } catch (err: unknown) {
+    const error = err as { status?: number; response?: { status?: number; headers?: { get?: (key: string) => string | null; [key: string]: string | undefined } } };
+    const status = error?.status || error?.response?.status;
     const retryAfter =
-      err?.response?.headers?.get?.("retry-after") ??
-      err?.response?.headers?.["retry-after"];
+      error?.response?.headers?.get?.("retry-after") ??
+      error?.response?.headers?.["retry-after"];
 
     if (status === 429) {
       return new NextResponse(JSON.stringify({ error: "Try again later" }), {

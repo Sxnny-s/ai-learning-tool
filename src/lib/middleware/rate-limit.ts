@@ -13,8 +13,8 @@ type Result =
 
 // Persist map across HMR in dev
 const buckets: Map<string, Hit[]> =
-  (globalThis as any).__rl_buckets ?? new Map();
-(globalThis as any).__rl_buckets = buckets;
+  (globalThis as { __rl_buckets?: Map<string, Hit[]> }).__rl_buckets ?? new Map();
+(globalThis as { __rl_buckets?: Map<string, Hit[]> }).__rl_buckets = buckets;
 
 function pruneOld(hits: Hit[], now: number, windowMs: number) {
   while (hits.length && now - hits[0].ts > windowMs) hits.shift();

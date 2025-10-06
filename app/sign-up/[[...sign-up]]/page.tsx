@@ -1,4 +1,5 @@
 import { SignUp } from '@clerk/nextjs';
+import Link from 'next/link';
 
 export default function Page() {
   return (
@@ -11,8 +12,10 @@ export default function Page() {
         appearance={{ elements: { formButtonPrimary: "bg-red-600 hover:bg-red-700" } }}
       />
       <div className="text-sm">
-        Already have an account?{" "}
-        <a href="/sign-in" className="underline">Sign in</a>
+        Already have an account?{' '}
+        <Link href="/sign-in" className="underline">
+          Sign in
+        </Link>
       </div>
     </div>
   );
