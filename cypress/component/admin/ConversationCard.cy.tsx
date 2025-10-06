@@ -1,6 +1,6 @@
 import React from "react";
 import { ConversationCard } from "../../../components/admin/ConversationCard";
-import { Conversation } from "../../../types/data";
+import { Conversation } from "../../../src/types/data";
 
 describe("ConversationCard Component", () => {
   // Mock conversation data for testing
