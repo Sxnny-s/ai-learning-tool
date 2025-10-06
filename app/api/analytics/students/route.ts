@@ -11,12 +11,12 @@ export async function GET() {
   }
 
   
-//DWIKDMWIK
-  let res = []
+//
+  const res = []
 
 
   data.forEach(student => {
-    let studentObject = {
+    const studentObject = {
       user_id: student['user_id'],
       name: student['full_name'],
       total_sessions: student['session_count'],
