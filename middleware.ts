@@ -4,6 +4,9 @@ import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher([
   '/api/webhooks/clerk',
   '/api/test',
+  '/api/auth/request-password-reset',
+  '/api/auth/reset-password/verify',
+  '/reset-password(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/unauthorized'
