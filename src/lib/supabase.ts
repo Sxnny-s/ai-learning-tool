@@ -7,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const supabaseAdmin = createClient(
   supabaseUrl,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY|| 'placeholder_service_key', //temporarily using anon key here to aid with frontend development
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_service_key', // ✅ Using service role key for admin operations
   {
     auth: {
       autoRefreshToken: false,
