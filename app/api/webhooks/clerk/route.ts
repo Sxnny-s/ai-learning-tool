@@ -44,16 +44,42 @@ const VALID_EVENT_TYPES = [
 ] as const;
 type ValidEventType = typeof VALID_EVENT_TYPES[number];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Check for Vercel bypass protection token in header
+  const bypassToken = request.headers.get('x-vercel-protection-bypass');
+  const expectedBypassToken = process.env.VERCEL_BYPASS_TOKEN;
+  
+  // If bypass token is expected but not provided or incorrect, reject
+  if (expectedBypassToken && bypassToken !== expectedBypassToken) {
+    return NextResponse.json(
+      { error: "Unauthorized - invalid bypass token" },
+      { status: 401 }
+    );
+  }
+
   return NextResponse.json({ 
     message: "Webhook endpoint is running", 
     method: "GET not supported - use POST for webhooks",
-    endpoint: "/api/webhooks/clerk"
+    endpoint: "/api/webhooks/clerk",
+    bypassTokenProvided: !!bypassToken
   });
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for Vercel bypass protection token in header
+    const bypassToken = request.headers.get('x-vercel-protection-bypass');
+    const expectedBypassToken = process.env.VERCEL_BYPASS_TOKEN;
+    
+    // If bypass token is expected but not provided or incorrect, reject
+    if (expectedBypassToken && bypassToken !== expectedBypassToken) {
+      console.error("Invalid or missing Vercel bypass token");
+      return NextResponse.json(
+        { error: "Unauthorized - invalid bypass token" },
+        { status: 401 }
+      );
+    }
+
     // Validate webhook secret
     if (!webhookSecret) {
       console.error("CLERK_WEBHOOK_SECRET is not set");
