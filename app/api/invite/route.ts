@@ -10,12 +10,12 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    // if (user.role !== "admin") {
-    //   return NextResponse.json(
-    //     { error: "Forbidden: Admin access required" },
-    //     { status: 403 }
-    //   );
-    // }
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
 
     // Get email addresses from request
     const { emails }: { emails: string[] } = await request.json();
