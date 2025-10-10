@@ -10,25 +10,25 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    if (user.role !== "admin") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
-    }
+    // if (user.role !== "admin") {
+    //   return NextResponse.json(
+    //     { error: "Forbidden: Admin access required" },
+    //     { status: 403 }
+    //   );
+    // }
 
     // Get email addresses from request
     const { emails }: { emails: string[] } = await request.json();
 
-    if (emails.length === 0) {
+    if (!emails || emails.length === 0) {
       return NextResponse.json(
         { error: "No emails provided" },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
     for (const email of emails) {
-      clerkClient.invitations.createInvitation({
+      await clerkClient.invitations.createInvitation({
         emailAddress: email,
         ignoreExisting: true,
       });
