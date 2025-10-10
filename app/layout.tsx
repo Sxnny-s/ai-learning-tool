@@ -1,10 +1,12 @@
+import { Header } from "@/components/Header";
+import { Toaster } from "@/components/ui/toaster";
+import { Analytics } from "@vercel/analytics/next";
+import type { Metadata } from "next";
 import { ClerkProvider } from '@clerk/nextjs'
-
 import type React from "react"
-import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
-import "./global.css"
+import "./globals.css"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,31 +14,39 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Resilient Coders Admin Dashboard",
-  description: "AI Learning Platform Administration",
-  generator: "v0.app",
-}
-
-interface Props {
-  children: React.ReactNode
-}
-
-const RootLayout: React.FC<Props> = (props) => {
-  const { children } = props;
-  
-  return (
-    // ClerkProvider wraps the entire app to provide authentication context
-    // The publishableKey prop ensures proper initialization and error handling
-    // PublishableKey is still needed.
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <html lang="en">
-        <body className={`font-sans ${inter.variable} antialiased`}>
-        <Suspense fallback={null}>{children}</Suspense>
-      </body>
-      </html>
-    </ClerkProvider>
-  );
+  title: "Resilient Coders Dashboard",
+  description: "AI Learning Platform Dashboard"
 };
 
-export default RootLayout;
+export default function RootLayout({
+  children
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  return (
+    <html lang="en">
+      <body className={`font-sans ${inter.variable} antialiased`}>
+        {clerkKey ? (
+          <ClerkProvider publishableKey={clerkKey}>
+            <Suspense fallback={null}>
+                <Header />
+                {children}
+                <Toaster />
+              <Analytics />
+            </Suspense>
+          </ClerkProvider>
+        ) : (
+          <Suspense fallback={null}>
+              <Header />
+              {children}
+              <Toaster />
+            <Analytics />
+          </Suspense>
+        )}
+      </body>
+    </html>
+  );
+}
 
