@@ -1,41 +1,40 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+/**
+ * Keep this tiny and explicit:
+ * - Make "/" (homepage) public
+ * - Allow sign-in route
+ * - Protect everything else
+ */
 const isPublicRoute = createRouteMatcher([
-  '/api/webhooks/clerk',
-  '/api/webhooks/clerk/(.*)',
-  '/api/test',
-  '/api/auth/request-password-reset',
-  '/api/auth/reset-password/verify',
-  '/reset-password(.*)',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/unauthorized'
+  "/",
+  "/favicon.ico",
+  "/api/webhooks/clerk",
+  "/api/webhooks/clerk/(.*)",
+  "/api/test",
+  "/api/auth/request-password-reset",
+  "/api/auth/reset-password/verify",
+  "/reset-password(.*)",
+  "/sign-in(.*)",
+  "/unauthorized",
 ]);
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // 1) Let public routes pass through
-  if (isPublicRoute(req)) {
-    return NextResponse.next();
-  }
+  // Public routes bypass auth
+  if (isPublicRoute(req)) return NextResponse.next();
 
-  // 2) Protect everything else
+  // Everything else requires auth
   await auth.protect();
 
-  // 3) Extra gate for admin routes (role check happens deeper)
+  // Extra gate for admin URLs (role/claims can be verified deeper in server components)
   if (isAdminRoute(req)) {
     const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
-    }
-
-    // The server-side requireRole() in the layout will handle the actual role check
-    // This middleware just ensures authentication for admin routes
+    if (!userId) return NextResponse.redirect(new URL("/sign-in", req.url));
   }
-  // default allow
+
   return NextResponse.next();
 });
 
