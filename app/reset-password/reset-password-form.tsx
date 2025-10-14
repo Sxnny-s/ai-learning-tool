@@ -153,7 +153,7 @@ export default function ResetPasswordForm() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           {secondFactor && (
             <p className="text-sm">
-              Two-factor is required for this account (this demo UI doesn't handle 2FA).
+              Two-factor is required for this account (this demo UI doesn&apos;t handle 2FA).
             </p>
           )}
         </form>
