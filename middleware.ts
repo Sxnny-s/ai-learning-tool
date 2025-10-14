@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   '/api/webhooks/clerk',
@@ -13,30 +12,14 @@ const isPublicRoute = createRouteMatcher([
   '/unauthorized'
 ]);
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
-
 export default clerkMiddleware(async (auth, req) => {
-  // 1) Let public routes pass through
+  // Let public routes pass through without protection
   if (isPublicRoute(req)) {
-    return NextResponse.next();
+    return;
   }
 
-  // 2) Protect everything else
+  // Protect all other routes
   await auth.protect();
-
-  // 3) Extra gate for admin routes (role check happens deeper)
-  if (isAdminRoute(req)) {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
-    }
-
-    // The server-side requireRole() in the layout will handle the actual role check
-    // This middleware just ensures authentication for admin routes
-  }
-  // default allow
-  return NextResponse.next();
 });
 
 export const config = {
@@ -47,3 +30,4 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 };
+
