@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SignInButton } from "@clerk/nextjs";
 import {
   IconBolt,
@@ -8,22 +10,37 @@ import {
   IconChecklist,
   IconShieldCheck,
 } from "@tabler/icons-react";
-
-/**
- * Public homepage at "/"
- * - Clear headline + short value prop
- * - Primary action: Sign in (modal via Clerk) + a plain link fallback
- * - No sign-up exposed (admin handles invites)
- */
+import RedirectOnAuth from "./components/redirect-on-auth";
 
 export const metadata = {
   title: "Resilient Coders | Home",
   description: "AI Learning Platform",
 };
 
-export default function HomePage() {
+type ClaimsWithRole = {
+  publicMetadata?: { role?: string };
+  metadata?: { role?: string };
+};
+
+function getRoleFromClaims(claims: unknown): string | undefined {
+  const c = claims as ClaimsWithRole | null;
+  return c?.publicMetadata?.role ?? c?.metadata?.role;
+}
+
+export default async function HomePage() {
+  // Server-side redirect if already signed in (handles refresh/direct visits)
+  const { userId, sessionClaims } = await auth();
+  if (userId) {
+    const role = getRoleFromClaims(sessionClaims);
+    if (role === "admin") redirect("/admin");
+    redirect("/chat");
+  }
+
   return (
     <main className="bg-white">
+      {/* Client redirect after modal completes (handles SPA flow) */}
+      <RedirectOnAuth />
+
       {/* HERO */}
       <section className="mx-auto max-w-7xl px-6 pt-14 pb-10 md:pt-20 md:pb-16">
         <div className="grid items-center gap-10 md:grid-cols-2">
@@ -37,26 +54,30 @@ export default function HomePage() {
               and track progress — all in one place.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              {/* Clerk modal sign-in */}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {/* Primary action: Clerk modal sign-in */}
               <SignInButton mode="modal">
-                <button className="rounded-full bg-black px-5 py-3 text-white hover:bg-neutral-900">
+                <button className="rounded-full bg-[#dc2626] hover:bg-[#b91c1c] text-white px-5 py-3 font-medium transition-colors">
                   Sign in
                 </button>
               </SignInButton>
 
-              {/* Fallback to hosted sign-in page */}
+              {/* Reset password as a red button */}
               <Link
-                href="/sign-in"
-                className="rounded-full border border-neutral-300 bg-white px-5 py-3 text-neutral-800 hover:bg-neutral-50"
+                href="/reset-password"
+                className="rounded-full bg-white text-[#dc2626] border border-[#dc2626] hover:bg-[#fef2f2] px-5 py-3 font-medium transition-colors"
               >
-                Use sign-in page
+                Forgot password
               </Link>
             </div>
 
-            <p className="mt-3 text-xs text-neutral-500">
-              Sign-up is invite-only and handled by an admin link.
-            </p>
+            {/* Admin-only signup note */}
+            <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+              <span className="font-semibold">Admin invite only</span>
+              <span className="text-sm text-amber-800">
+                Sign-ups aren’t public. Ask an admin for an invite link.
+              </span>
+            </div>
 
             {/* small confidence row */}
             <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-neutral-700">
@@ -80,7 +101,7 @@ export default function HomePage() {
                 alt="Resilient Coders"
                 fill
                 priority
-                className="object-contain p-2"  // reduce/remove padding if you want even tighter fit
+                className="object-contain p-2"
                 sizes="(min-width: 768px) 520px, 100vw"
               />
             </div>
@@ -130,7 +151,6 @@ export default function HomePage() {
 }
 
 /* ——— presentational helpers ——— */
-
 function Feature({
   icon,
   title,
@@ -150,4 +170,3 @@ function Feature({
     </div>
   );
 }
-

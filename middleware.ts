@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
  * - Allow sign-in route
  * - Protect everything else
  */
+const isHome = createRouteMatcher(["/"]);
 const isPublicRoute = createRouteMatcher([
   "/",
   "/favicon.ico",
@@ -22,7 +23,28 @@ const isPublicRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
+type ClaimsWithRole = {
+  publicMetadata?: { role?: string };
+  metadata?: { role?: string };
+};
+
+function getRoleFromClaims(claims: unknown): string | undefined {
+  const c = claims as ClaimsWithRole | null;
+  return c?.publicMetadata?.role ?? c?.metadata?.role;
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  // If visiting "/" and already signed in, redirect before rendering
+  if (isHome(req)) {
+    const { userId, sessionClaims } = await auth();
+    if (userId) {
+      const role = getRoleFromClaims(sessionClaims);
+      const to = role === "admin" ? "/admin" : "/chat";
+      return NextResponse.redirect(new URL(to, req.url));
+    }
+    return NextResponse.next();
+  }
+
   // Public routes bypass auth
   if (isPublicRoute(req)) return NextResponse.next();
 
@@ -40,9 +62,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals & static files unless in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };
