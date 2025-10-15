@@ -386,6 +386,30 @@ export interface StudentProgress {
   };
 }
 
+// Cohort-related interfaces
+export interface Cohort {
+  id: number;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: 'Active' | 'Completed' | 'Upcoming';
+  studentCount: number;
+  instructor: string;
+  curriculum: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CohortStudent extends Student {
+  cohortId: number;
+  enrollmentDate: string;
+  graduationDate?: string;
+  cohortProgress: number;
+  assignmentsCompleted: number;
+  totalAssignments: number;
+}
+
 export const generateSampleStrugglingStudents = (): StrugglingStudent[] => [
   {
     id: 1,
@@ -608,3 +632,72 @@ export const generateSampleStudentProgress = (): StudentProgress[] => [
     },
   },
 ];
+
+// Cohort sample data generators
+export const generateSampleCohorts = (): Cohort[] => [
+  {
+    id: 1,
+    name: "Full-Stack Development - Spring 2024",
+    description: "Comprehensive full-stack development program covering frontend, backend, and deployment",
+    startDate: "2024-01-15",
+    endDate: "2024-06-15",
+    status: "Active",
+    studentCount: 24,
+    instructor: "Sarah Johnson",
+    curriculum: ["HTML/CSS", "JavaScript", "React", "Node.js", "Database Design", "Deployment"],
+    createdAt: "2024-01-01",
+    updatedAt: "2024-02-01",
+  },
+  {
+    id: 2,
+    name: "Data Science Intensive - Winter 2024",
+    description: "Data science and machine learning intensive program",
+    startDate: "2024-02-01",
+    endDate: "2024-05-01",
+    status: "Active",
+    studentCount: 18,
+    instructor: "Dr. Michael Chen",
+    curriculum: ["Python", "Pandas", "NumPy", "Machine Learning", "Data Visualization", "Statistics"],
+    createdAt: "2024-01-15",
+    updatedAt: "2024-02-01",
+  },
+  {
+    id: 3,
+    name: "Frontend Development - Fall 2023",
+    description: "Modern frontend development with React and TypeScript",
+    startDate: "2023-09-01",
+    endDate: "2023-12-15",
+    status: "Completed",
+    studentCount: 32,
+    instructor: "Alex Rodriguez",
+    curriculum: ["HTML/CSS", "JavaScript", "React", "TypeScript", "Testing", "Deployment"],
+    createdAt: "2023-08-15",
+    updatedAt: "2023-12-20",
+  },
+  {
+    id: 4,
+    name: "Backend Development - Summer 2024",
+    description: "Backend development with Node.js, Express, and databases",
+    startDate: "2024-06-01",
+    endDate: "2024-09-01",
+    status: "Upcoming",
+    studentCount: 0,
+    instructor: "Emily Davis",
+    curriculum: ["Node.js", "Express", "MongoDB", "PostgreSQL", "API Design", "Authentication"],
+    createdAt: "2024-03-01",
+    updatedAt: "2024-03-01",
+  },
+];
+
+export const generateSampleCohortStudents = (cohortId: number): CohortStudent[] => {
+  const baseStudents = generateSampleStudents();
+  return baseStudents.map((student) => ({
+    ...student,
+    cohortId,
+    enrollmentDate: "2024-01-15",
+    graduationDate: cohortId === 3 ? "2023-12-15" : undefined,
+    cohortProgress: Math.floor(Math.random() * 100),
+    assignmentsCompleted: Math.floor(Math.random() * 20),
+    totalAssignments: 20,
+  }));
+};
