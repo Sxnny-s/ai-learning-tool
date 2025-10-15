@@ -19,6 +19,7 @@ interface ProfileData {
 //edit
 export async function GET() {
   try {
+    // Create Supabase client for server-side database operations
     const supabase = await createServerSupabaseClient();
 
     const { data, error } = await supabase
