@@ -86,6 +86,7 @@ export const fetchCohortStudents = async (cohortName: string): Promise<CohortStu
     // Convert API response to CohortStudent format expected by frontend
     const students: CohortStudent[] = result.data.map((studentData: any) => ({
       id: parseInt(studentData.id) || Math.floor(Math.random() * 1000),
+      userId: studentData.id, // Preserve the actual database user_id for API operations
       name: studentData.fullName || 'Unknown',
       email: studentData.email,
       joinDate: studentData.createdAt ? new Date(studentData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -346,6 +347,40 @@ export const createStudent = async (studentData: {
     return result
   } catch (error) {
     console.error('Error creating student:', error)
+    throw error
+  }
+}
+
+/**
+ * Update a student's information
+ * Calls PUT /api/admin/students/[userId] to update student details
+ */
+export const updateStudent = async (userId: string, studentData: {
+  fullName?: string;
+  email?: string;
+}): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetch(`/api/admin/students/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(studentData)
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to update student')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update student')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to PUT /api/admin/students/[userId]')
+    return result
+  } catch (error) {
+    console.error('Error updating student:', error)
     throw error
   }
 }

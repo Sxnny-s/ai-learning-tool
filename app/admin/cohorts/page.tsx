@@ -10,7 +10,8 @@ import {
   deleteCohort, 
   addStudentToCohort, 
   removeStudentFromCohort,
-  createStudent
+  createStudent,
+  updateStudent
 } from "@/lib/cohortService"
 import { Button } from "@/components/ui/ButtonComponent"
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/CardComponent"
@@ -175,9 +176,16 @@ const CohortsPage: React.FC = () => {
       const newName = prompt('Enter new student name:');
       if (!newName?.trim()) return;
 
-      // Note: This would need a PUT /api/users/[userId] route for student updates
-      // For now, we'll just show a message
-      alert('Student editing functionality requires a separate API endpoint. This feature will be implemented in a future update.');
+      // Update student using the new API
+      await updateStudent(studentId, { fullName: newName.trim() });
+      
+      // Refresh students list
+      if (selectedCohort) {
+        const updatedStudents = await fetchCohortStudents(selectedCohort.name);
+        setCohortStudents(updatedStudents);
+      }
+      
+      alert(`Student name updated to "${newName}" successfully!`);
     } catch (error) {
       console.error('Error editing student:', error);
       alert('Failed to edit student. Please try again.');
@@ -393,14 +401,14 @@ const CohortsPage: React.FC = () => {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => handleEditStudent(student.id.toString())}
+                                onClick={() => handleEditStudent(student.userId)}
                               >
                                 <IconEdit className="w-4 h-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => handleDeleteStudent(selectedCohort.name, student.id.toString())}
+                                onClick={() => handleDeleteStudent(selectedCohort.name, student.userId)}
                                 className="text-red-600 hover:text-red-700"
                               >
                                 <IconTrash className="w-4 h-4" />
