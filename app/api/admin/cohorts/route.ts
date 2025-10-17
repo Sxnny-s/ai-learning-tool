@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { getCohorts } from "@/lib/database/cohort";
+import { getCohorts, createCohort, updateCohort, deleteCohort } from "@/lib/database/cohort";
 
 /**
  * GET /api/admin/cohorts
@@ -64,6 +64,168 @@ export async function GET(request: NextRequest) {
     console.error("Error in GET /api/admin/cohorts:", error);
     return NextResponse.json(
       { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/admin/cohorts
+ * Create a new cohort by assigning students to a cohort name (admin only)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth();
+    
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { name, studentIds } = body;
+
+    // Validate request body
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return NextResponse.json(
+        { error: "Cohort name is required and must be a non-empty string" },
+        { status: 400 }
+      );
+    }
+
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return NextResponse.json(
+        { error: "At least one student ID must be provided" },
+        { status: 400 }
+      );
+    }
+
+    // Validate student IDs
+    const validStudentIds = studentIds.filter(id => typeof id === 'string' && id.trim() !== '');
+    if (validStudentIds.length === 0) {
+      return NextResponse.json(
+        { error: "All student IDs must be valid non-empty strings" },
+        { status: 400 }
+      );
+    }
+
+    // Create the cohort
+    await createCohort(name.trim(), validStudentIds);
+
+    console.log(`Admin ${user.id} created cohort "${name}" with ${validStudentIds.length} students`);
+
+    return NextResponse.json({
+      success: true,
+      message: `Cohort "${name}" created successfully with ${validStudentIds.length} students`
+    });
+  } catch (error) {
+    console.error("Error in POST /api/admin/cohorts:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PUT /api/admin/cohorts
+ * Update cohort name (rename cohort) (admin only)
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await requireAuth();
+    
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { oldName, newName } = body;
+
+    // Validate request body
+    if (!oldName || typeof oldName !== 'string' || oldName.trim() === '') {
+      return NextResponse.json(
+        { error: "Old cohort name is required and must be a non-empty string" },
+        { status: 400 }
+      );
+    }
+
+    if (!newName || typeof newName !== 'string' || newName.trim() === '') {
+      return NextResponse.json(
+        { error: "New cohort name is required and must be a non-empty string" },
+        { status: 400 }
+      );
+    }
+
+    if (oldName.trim() === newName.trim()) {
+      return NextResponse.json(
+        { error: "Old and new cohort names cannot be the same" },
+        { status: 400 }
+      );
+    }
+
+    // Update the cohort
+    await updateCohort(oldName.trim(), newName.trim());
+
+    console.log(`Admin ${user.id} updated cohort from "${oldName}" to "${newName}"`);
+
+    return NextResponse.json({
+      success: true,
+      message: `Cohort renamed from "${oldName}" to "${newName}" successfully`
+    });
+  } catch (error) {
+    console.error("Error in PUT /api/admin/cohorts:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/admin/cohorts
+ * Delete cohort (remove all students from cohort) (admin only)
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await requireAuth();
+    
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const cohortName = searchParams.get('name');
+
+    // Validate cohort name
+    if (!cohortName || cohortName.trim() === '') {
+      return NextResponse.json(
+        { error: "Cohort name is required as query parameter" },
+        { status: 400 }
+      );
+    }
+
+    // Delete the cohort
+    await deleteCohort(cohortName.trim());
+
+    console.log(`Admin ${user.id} deleted cohort "${cohortName}"`);
+
+    return NextResponse.json({
+      success: true,
+      message: `Cohort "${cohortName}" deleted successfully`
+    });
+  } catch (error) {
+    console.error("Error in DELETE /api/admin/cohorts:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }

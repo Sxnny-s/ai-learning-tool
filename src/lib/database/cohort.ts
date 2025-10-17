@@ -55,7 +55,7 @@ export async function getCohorts(): Promise<CohortData[]> {
       if (!cohortMap.has(cohortName)) {
         cohortMap.set(cohortName, []);
       }
-      cohortMap.get(cohortName)!.push(user);
+      cohortMap.get(cohortName)!.push(user as DatabaseUser);
     });
 
     // Convert to CohortData format
@@ -107,6 +107,177 @@ export async function getStudentsByCohort(cohortName: string): Promise<DatabaseU
     return data || [];
   } catch (error) {
     console.error("Error getting students by cohort:", error);
+    throw error;
+  }
+}
+
+/**
+ * Create a new cohort by assigning students to a cohort name
+ * Updates the profiles table to set cohort field for specified students
+ */
+export async function createCohort(cohortName: string, studentIds: string[]): Promise<void> {
+  try {
+    if (!cohortName || cohortName.trim() === '') {
+      throw new Error('Cohort name is required');
+    }
+
+    if (!studentIds || studentIds.length === 0) {
+      throw new Error('At least one student must be assigned to the cohort');
+    }
+
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        cohort: cohortName.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .in('user_id', studentIds);
+
+    if (error) {
+      console.error("Supabase error creating cohort:", error);
+      throw error;
+    }
+
+    console.log(`Created cohort "${cohortName}" with ${studentIds.length} students`);
+  } catch (error) {
+    console.error("Error creating cohort:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update cohort name (rename cohort)
+ * Updates all students in the old cohort to the new cohort name
+ */
+export async function updateCohort(oldCohortName: string, newCohortName: string): Promise<void> {
+  try {
+    if (!oldCohortName || oldCohortName.trim() === '') {
+      throw new Error('Old cohort name is required');
+    }
+
+    if (!newCohortName || newCohortName.trim() === '') {
+      throw new Error('New cohort name is required');
+    }
+
+    if (oldCohortName === newCohortName) {
+      throw new Error('Old and new cohort names cannot be the same');
+    }
+
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        cohort: newCohortName.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('cohort', oldCohortName);
+
+    if (error) {
+      console.error("Supabase error updating cohort:", error);
+      throw error;
+    }
+
+    console.log(`Updated cohort from "${oldCohortName}" to "${newCohortName}"`);
+  } catch (error) {
+    console.error("Error updating cohort:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete cohort (remove all students from cohort)
+ * Sets cohort field to null for all students in the specified cohort
+ */
+export async function deleteCohort(cohortName: string): Promise<void> {
+  try {
+    if (!cohortName || cohortName.trim() === '') {
+      throw new Error('Cohort name is required');
+    }
+
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        cohort: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('cohort', cohortName);
+
+    if (error) {
+      console.error("Supabase error deleting cohort:", error);
+      throw error;
+    }
+
+    console.log(`Deleted cohort "${cohortName}" - removed all students from cohort`);
+  } catch (error) {
+    console.error("Error deleting cohort:", error);
+    throw error;
+  }
+}
+
+/**
+ * Add a student to a cohort
+ * Updates the student's cohort field to the specified cohort name
+ */
+export async function addStudentToCohort(cohortName: string, studentId: string): Promise<void> {
+  try {
+    if (!cohortName || cohortName.trim() === '') {
+      throw new Error('Cohort name is required');
+    }
+
+    if (!studentId || studentId.trim() === '') {
+      throw new Error('Student ID is required');
+    }
+
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        cohort: cohortName.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', studentId);
+
+    if (error) {
+      console.error("Supabase error adding student to cohort:", error);
+      throw error;
+    }
+
+    console.log(`Added student ${studentId} to cohort "${cohortName}"`);
+  } catch (error) {
+    console.error("Error adding student to cohort:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a student from a cohort
+ * Sets the student's cohort field to null
+ */
+export async function removeStudentFromCohort(cohortName: string, studentId: string): Promise<void> {
+  try {
+    if (!cohortName || cohortName.trim() === '') {
+      throw new Error('Cohort name is required');
+    }
+
+    if (!studentId || studentId.trim() === '') {
+      throw new Error('Student ID is required');
+    }
+
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        cohort: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', studentId)
+      .eq('cohort', cohortName);
+
+    if (error) {
+      console.error("Supabase error removing student from cohort:", error);
+      throw error;
+    }
+
+    console.log(`Removed student ${studentId} from cohort "${cohortName}"`);
+  } catch (error) {
+    console.error("Error removing student from cohort:", error);
     throw error;
   }
 }

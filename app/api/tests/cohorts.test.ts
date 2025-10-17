@@ -6,8 +6,8 @@
 /// <reference types="jest" />
 
 import { NextRequest } from 'next/server';
-import { GET as getCohortsRoute } from '../admin/cohorts/route';
-import { GET as getCohortStudentsRoute } from '../admin/cohorts/[cohortName]/students/route';
+import { GET as getCohortsRoute, POST as postCohortsRoute, PUT as putCohortsRoute, DELETE as deleteCohortsRoute } from '../admin/cohorts/route';
+import { GET as getCohortStudentsRoute, POST as postCohortStudentsRoute, DELETE as deleteCohortStudentsRoute } from '../admin/cohorts/[cohortName]/students/route';
 import type { DatabaseUser } from '../../../src/lib/database/user';
 import type { CohortData } from '../../../src/lib/database/cohort';
 
@@ -19,14 +19,24 @@ jest.mock('@/lib/auth', () => ({
 jest.mock('@/lib/database/cohort', () => ({
   getCohorts: jest.fn(),
   getStudentsByCohort: jest.fn(),
+  createCohort: jest.fn(),
+  updateCohort: jest.fn(),
+  deleteCohort: jest.fn(),
+  addStudentToCohort: jest.fn(),
+  removeStudentFromCohort: jest.fn(),
 }));
 
 import { requireAuth } from '../../../src/lib/auth';
-import { getCohorts, getStudentsByCohort } from '../../../src/lib/database/cohort';
+import { getCohorts, getStudentsByCohort, createCohort, updateCohort, deleteCohort, addStudentToCohort, removeStudentFromCohort } from '../../../src/lib/database/cohort';
 
 const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>;
 const mockGetCohorts = getCohorts as jest.MockedFunction<typeof getCohorts>;
 const mockGetStudentsByCohort = getStudentsByCohort as jest.MockedFunction<typeof getStudentsByCohort>;
+const mockCreateCohort = createCohort as jest.MockedFunction<typeof createCohort>;
+const mockUpdateCohort = updateCohort as jest.MockedFunction<typeof updateCohort>;
+const mockDeleteCohort = deleteCohort as jest.MockedFunction<typeof deleteCohort>;
+const mockAddStudentToCohort = addStudentToCohort as jest.MockedFunction<typeof addStudentToCohort>;
+const mockRemoveStudentFromCohort = removeStudentFromCohort as jest.MockedFunction<typeof removeStudentFromCohort>;
 
 describe('GET /api/admin/cohorts', () => {
   beforeEach(() => {
@@ -382,5 +392,377 @@ describe('GET /api/admin/cohorts/[cohortName]/students', () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(mockGetStudentsByCohort).toHaveBeenCalledWith(decodedCohortName);
+  });
+});
+
+describe('POST /api/admin/cohorts', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return 403 for non-admin users', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'student',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Test Cohort', studentIds: ['user-1'] }),
+    });
+    const response = await postCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden: Admin access required');
+  });
+
+  it('should return 400 for missing cohort name', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'POST',
+      body: JSON.stringify({ studentIds: ['user-1'] }),
+    });
+    const response = await postCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Cohort name is required and must be a non-empty string');
+  });
+
+  it('should return 400 for missing student IDs', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Test Cohort' }),
+    });
+    const response = await postCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('At least one student ID must be provided');
+  });
+
+  it('should successfully create cohort for admin', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    mockCreateCohort.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Test Cohort', studentIds: ['user-1', 'user-2'] }),
+    });
+    const response = await postCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.message).toBe('Cohort "Test Cohort" created successfully with 2 students');
+    expect(mockCreateCohort).toHaveBeenCalledWith('Test Cohort', ['user-1', 'user-2']);
+  });
+});
+
+describe('PUT /api/admin/cohorts', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return 403 for non-admin users', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'student',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'PUT',
+      body: JSON.stringify({ oldName: 'Old Cohort', newName: 'New Cohort' }),
+    });
+    const response = await putCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden: Admin access required');
+  });
+
+  it('should return 400 for missing old name', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'PUT',
+      body: JSON.stringify({ newName: 'New Cohort' }),
+    });
+    const response = await putCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Old cohort name is required and must be a non-empty string');
+  });
+
+  it('should return 400 for same old and new names', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'PUT',
+      body: JSON.stringify({ oldName: 'Same Cohort', newName: 'Same Cohort' }),
+    });
+    const response = await putCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Old and new cohort names cannot be the same');
+  });
+
+  it('should successfully update cohort for admin', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    mockUpdateCohort.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'PUT',
+      body: JSON.stringify({ oldName: 'Old Cohort', newName: 'New Cohort' }),
+    });
+    const response = await putCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.message).toBe('Cohort renamed from "Old Cohort" to "New Cohort" successfully');
+    expect(mockUpdateCohort).toHaveBeenCalledWith('Old Cohort', 'New Cohort');
+  });
+});
+
+describe('DELETE /api/admin/cohorts', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return 403 for non-admin users', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'student',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts?name=Test%20Cohort');
+    const response = await deleteCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden: Admin access required');
+  });
+
+  it('should return 400 for missing cohort name', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts');
+    const response = await deleteCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Cohort name is required as query parameter');
+  });
+
+  it('should successfully delete cohort for admin', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    mockDeleteCohort.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts?name=Test%20Cohort');
+    const response = await deleteCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.message).toBe('Cohort "Test Cohort" deleted successfully');
+    expect(mockDeleteCohort).toHaveBeenCalledWith('Test Cohort');
+  });
+});
+
+describe('POST /api/admin/cohorts/[cohortName]/students', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return 403 for non-admin users', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'student',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts/Test%20Cohort/students', {
+      method: 'POST',
+      body: JSON.stringify({ studentId: 'user-1' }),
+    });
+    const response = await postCohortStudentsRoute(request, { params: { cohortName: 'Test Cohort' } });
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden: Admin access required');
+  });
+
+  it('should return 400 for missing student ID', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts/Test%20Cohort/students', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    const response = await postCohortStudentsRoute(request, { params: { cohortName: 'Test Cohort' } });
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Student ID is required and must be a non-empty string');
+  });
+
+  it('should successfully add student to cohort for admin', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    mockAddStudentToCohort.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts/Test%20Cohort/students', {
+      method: 'POST',
+      body: JSON.stringify({ studentId: 'user-1' }),
+    });
+    const response = await postCohortStudentsRoute(request, { params: { cohortName: 'Test Cohort' } });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.message).toBe('Student user-1 added to cohort "Test Cohort" successfully');
+    expect(mockAddStudentToCohort).toHaveBeenCalledWith('Test Cohort', 'user-1');
+  });
+});
+
+describe('DELETE /api/admin/cohorts/[cohortName]/students', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return 403 for non-admin users', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      role: 'student',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts/Test%20Cohort/students?studentId=user-1');
+    const response = await deleteCohortStudentsRoute(request, { params: { cohortName: 'Test Cohort' } });
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden: Admin access required');
+  });
+
+  it('should return 400 for missing student ID', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts/Test%20Cohort/students');
+    const response = await deleteCohortStudentsRoute(request, { params: { cohortName: 'Test Cohort' } });
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Student ID is required as query parameter');
+  });
+
+  it('should successfully remove student from cohort for admin', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    mockRemoveStudentFromCohort.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts/Test%20Cohort/students?studentId=user-1');
+    const response = await deleteCohortStudentsRoute(request, { params: { cohortName: 'Test Cohort' } });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.message).toBe('Student user-1 removed from cohort "Test Cohort" successfully');
+    expect(mockRemoveStudentFromCohort).toHaveBeenCalledWith('Test Cohort', 'user-1');
   });
 });

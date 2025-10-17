@@ -116,9 +116,9 @@ export const fetchCohortStudents = async (cohortId: number): Promise<CohortStude
  * Create a new cohort
  * TODO: Replace with actual API call when backend route is ready
  * Expected endpoint: POST /api/admin/cohorts
+ * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const createCohort = async (_cohortData: Omit<Cohort, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cohort> => {
+export const createCohort = async (cohortData: { name: string; studentIds: string[] }): Promise<{ success: boolean; message: string }> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}`, {
@@ -129,9 +129,26 @@ export const createCohort = async (_cohortData: Omit<Cohort, 'id' | 'createdAt' 
     // if (!response.ok) throw new Error('Failed to create cohort')
     // return await response.json()
     
-    // Placeholder response - will be removed when backend is ready
-    console.log('TODO: Replace with actual API call to POST /api/admin/cohorts')
-    throw new Error('Create cohort functionality not yet implemented - waiting for backend')
+    // ✅ IMPLEMENTED: Now using actual API call
+    const response = await fetch(`${API_BASE_URL}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cohortData)
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to create cohort')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create cohort')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to POST /api/admin/cohorts')
+    return result
   } catch (error) {
     console.error('Error creating cohort:', error)
     throw error
@@ -142,9 +159,9 @@ export const createCohort = async (_cohortData: Omit<Cohort, 'id' | 'createdAt' 
  * Update an existing cohort
  * TODO: Replace with actual API call when backend route is ready
  * Expected endpoint: PUT /api/admin/cohorts/{cohortId}
+ * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const updateCohort = async (cohortId: number, _cohortData: Partial<Cohort>): Promise<Cohort> => {
+export const updateCohort = async (oldName: string, newName: string): Promise<{ success: boolean; message: string }> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}/${cohortId}`, {
@@ -155,9 +172,26 @@ export const updateCohort = async (cohortId: number, _cohortData: Partial<Cohort
     // if (!response.ok) throw new Error('Failed to update cohort')
     // return await response.json()
     
-    // Placeholder response - will be removed when backend is ready
-    console.log(`TODO: Replace with actual API call to PUT /api/admin/cohorts/${cohortId}`)
-    throw new Error('Update cohort functionality not yet implemented - waiting for backend')
+    // ✅ IMPLEMENTED: Now using actual API call
+    const response = await fetch(`${API_BASE_URL}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldName, newName })
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to update cohort')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update cohort')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to PUT /api/admin/cohorts')
+    return result
   } catch (error) {
     console.error('Error updating cohort:', error)
     throw error
@@ -168,8 +202,9 @@ export const updateCohort = async (cohortId: number, _cohortData: Partial<Cohort
  * Delete a cohort
  * TODO: Replace with actual API call when backend route is ready
  * Expected endpoint: DELETE /api/admin/cohorts/{cohortId}
+ * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-export const deleteCohort = async (cohortId: number): Promise<void> => {
+export const deleteCohort = async (cohortName: string): Promise<{ success: boolean; message: string }> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}/${cohortId}`, {
@@ -177,9 +212,24 @@ export const deleteCohort = async (cohortId: number): Promise<void> => {
     // })
     // if (!response.ok) throw new Error('Failed to delete cohort')
     
-    // Placeholder response - will be removed when backend is ready
-    console.log(`TODO: Replace with actual API call to DELETE /api/admin/cohorts/${cohortId}`)
-    throw new Error('Delete cohort functionality not yet implemented - waiting for backend')
+    // ✅ IMPLEMENTED: Now using actual API call
+    const response = await fetch(`${API_BASE_URL}?name=${encodeURIComponent(cohortName)}`, {
+      method: 'DELETE'
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to delete cohort')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete cohort')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to DELETE /api/admin/cohorts')
+    return result
   } catch (error) {
     console.error('Error deleting cohort:', error)
     throw error
@@ -190,9 +240,9 @@ export const deleteCohort = async (cohortId: number): Promise<void> => {
  * Add a student to a cohort
  * TODO: Replace with actual API call when backend route is ready
  * Expected endpoint: POST /api/admin/cohorts/{cohortId}/students
+ * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const addStudentToCohort = async (cohortId: number, _studentId: number): Promise<void> => {
+export const addStudentToCohort = async (cohortName: string, studentId: string): Promise<{ success: boolean; message: string }> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}/${cohortId}/students`, {
@@ -202,9 +252,26 @@ export const addStudentToCohort = async (cohortId: number, _studentId: number): 
     // })
     // if (!response.ok) throw new Error('Failed to add student to cohort')
     
-    // Placeholder response - will be removed when backend is ready
-    console.log(`TODO: Replace with actual API call to POST /api/admin/cohorts/${cohortId}/students`)
-    throw new Error('Add student to cohort functionality not yet implemented - waiting for backend')
+    // ✅ IMPLEMENTED: Now using actual API call
+    const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(cohortName)}/students`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId })
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to add student to cohort')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to add student to cohort')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to POST /api/admin/cohorts/[cohortName]/students')
+    return result
   } catch (error) {
     console.error('Error adding student to cohort:', error)
     throw error
@@ -215,8 +282,9 @@ export const addStudentToCohort = async (cohortId: number, _studentId: number): 
  * Remove a student from a cohort
  * TODO: Replace with actual API call when backend route is ready
  * Expected endpoint: DELETE /api/admin/cohorts/{cohortId}/students/{studentId}
+ * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-export const removeStudentFromCohort = async (cohortId: number, studentId: number): Promise<void> => {
+export const removeStudentFromCohort = async (cohortName: string, studentId: string): Promise<{ success: boolean; message: string }> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}/${cohortId}/students/${studentId}`, {
@@ -224,9 +292,24 @@ export const removeStudentFromCohort = async (cohortId: number, studentId: numbe
     // })
     // if (!response.ok) throw new Error('Failed to remove student from cohort')
     
-    // Placeholder response - will be removed when backend is ready
-    console.log(`TODO: Replace with actual API call to DELETE /api/admin/cohorts/${cohortId}/students/${studentId}`)
-    throw new Error('Remove student from cohort functionality not yet implemented - waiting for backend')
+    // ✅ IMPLEMENTED: Now using actual API call
+    const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(cohortName)}/students?studentId=${encodeURIComponent(studentId)}`, {
+      method: 'DELETE'
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to remove student from cohort')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to remove student from cohort')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to DELETE /api/admin/cohorts/[cohortName]/students')
+    return result
   } catch (error) {
     console.error('Error removing student from cohort:', error)
     throw error
