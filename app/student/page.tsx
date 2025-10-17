@@ -97,7 +97,7 @@ const pieData = [
   }
 ];
 
-export const StudentDashboard = () => {
+const StudentDashboard = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [chatMessage, setChatMessage] = useState("");
 
@@ -614,3 +614,5 @@ export const StudentDashboard = () => {
     </>
   );
 };
+
+export default StudentDashboard
