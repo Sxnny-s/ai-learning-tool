@@ -65,7 +65,7 @@ export const fetchCohorts = async (): Promise<Cohort[]> => {
  * Expected endpoint: GET /api/admin/cohorts/{cohortId}/students
  * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-export const fetchCohortStudents = async (cohortId: number): Promise<CohortStudent[]> => {
+export const fetchCohortStudents = async (cohortName: string): Promise<CohortStudent[]> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}/${cohortId}/students`)
@@ -74,7 +74,6 @@ export const fetchCohortStudents = async (cohortId: number): Promise<CohortStude
     
     // ✅ IMPLEMENTED: Now using actual API call
     // Use the cohort name directly as the API expects cohortName (string)
-    const cohortName = cohortId // Use the actual cohort name (which is now the ID)
     
     const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(cohortName)}/students`)
     if (!response.ok) throw new Error('Failed to fetch cohort students')
@@ -96,7 +95,7 @@ export const fetchCohortStudents = async (cohortId: number): Promise<CohortStude
       totalLessons: 20, // Default total
       lastActive: studentData.lastSessionEndedAt ? new Date(studentData.lastSessionEndedAt).toISOString() : new Date().toISOString(),
       streak: Math.floor(Math.random() * 10), // Default streak
-      cohortId: cohortId,
+      cohortId: cohortName,
       enrollmentDate: studentData.createdAt ? new Date(studentData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       graduationDate: undefined, // Default no graduation
       cohortProgress: Math.floor(Math.random() * 100), // Default cohort progress
@@ -312,6 +311,41 @@ export const removeStudentFromCohort = async (cohortName: string, studentId: str
     return result
   } catch (error) {
     console.error('Error removing student from cohort:', error)
+    throw error
+  }
+}
+
+/**
+ * Create a new student profile
+ * Calls POST /api/admin/students to create a new student with generated UUID
+ */
+export const createStudent = async (studentData: { 
+  email: string; 
+  fullName: string; 
+  cohort?: string 
+}): Promise<{ success: boolean; data: { studentId: string }; message: string }> => {
+  try {
+    const response = await fetch('/api/admin/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(studentData)
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to create student')
+    }
+    
+    const result = await response.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create student')
+    }
+    
+    console.log('✅ IMPLEMENTED: Using actual API call to POST /api/admin/students')
+    return result
+  } catch (error) {
+    console.error('Error creating student:', error)
     throw error
   }
 }

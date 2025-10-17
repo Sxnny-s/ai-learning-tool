@@ -95,16 +95,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+    // Allow empty student arrays for creating empty cohorts
+    if (!studentIds || !Array.isArray(studentIds)) {
       return NextResponse.json(
-        { error: "At least one student ID must be provided" },
+        { error: "studentIds must be an array" },
         { status: 400 }
       );
     }
 
-    // Validate student IDs
+    // Validate student IDs (only if any are provided)
     const validStudentIds = studentIds.filter(id => typeof id === 'string' && id.trim() !== '');
-    if (validStudentIds.length === 0) {
+    if (studentIds.length > 0 && validStudentIds.length === 0) {
       return NextResponse.json(
         { error: "All student IDs must be valid non-empty strings" },
         { status: 400 }

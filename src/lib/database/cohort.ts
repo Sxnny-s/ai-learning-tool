@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from '../supabase';
 import type { DatabaseUser } from './user';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface CohortData {
   name: string;
@@ -121,24 +122,25 @@ export async function createCohort(cohortName: string, studentIds: string[]): Pr
       throw new Error('Cohort name is required');
     }
 
-    if (!studentIds || studentIds.length === 0) {
-      throw new Error('At least one student must be assigned to the cohort');
+    // Allow creating empty cohorts - only update students if any are provided
+    if (studentIds && studentIds.length > 0) {
+      const { error } = await supabaseAdmin
+        .from('profiles')
+        .update({ 
+          cohort: cohortName.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .in('user_id', studentIds);
+
+      if (error) {
+        console.error("Supabase error creating cohort:", error);
+        throw error;
+      }
+
+      console.log(`Created cohort "${cohortName}" with ${studentIds.length} students`);
+    } else {
+      console.log(`Created empty cohort "${cohortName}" - no students assigned yet`);
     }
-
-    const { error } = await supabaseAdmin
-      .from('profiles')
-      .update({ 
-        cohort: cohortName.trim(),
-        updated_at: new Date().toISOString()
-      })
-      .in('user_id', studentIds);
-
-    if (error) {
-      console.error("Supabase error creating cohort:", error);
-      throw error;
-    }
-
-    console.log(`Created cohort "${cohortName}" with ${studentIds.length} students`);
   } catch (error) {
     console.error("Error creating cohort:", error);
     throw error;
@@ -278,6 +280,63 @@ export async function removeStudentFromCohort(cohortName: string, studentId: str
     console.log(`Removed student ${studentId} from cohort "${cohortName}"`);
   } catch (error) {
     console.error("Error removing student from cohort:", error);
+    throw error;
+  }
+}
+
+/**
+ * Create a new student profile
+ * Generates a new UUID and inserts a new student record into the profiles table
+ */
+export async function createStudent(studentData: {
+  email: string;
+  fullName: string;
+  cohort?: string;
+}): Promise<string> {
+  try {
+    if (!studentData.email || studentData.email.trim() === '') {
+      throw new Error('Student email is required');
+    }
+
+    if (!studentData.fullName || studentData.fullName.trim() === '') {
+      throw new Error('Student full name is required');
+    }
+
+    // Generate a new UUID for the student
+    const newUserId = uuidv4();
+    const now = new Date().toISOString();
+
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        user_id: newUserId,
+        email: studentData.email.trim(),
+        full_name: studentData.fullName.trim(),
+        role: 'student',
+        cohort: studentData.cohort?.trim() || null,
+        created_at: now,
+        updated_at: now,
+        // Set defaults for other fields
+        session_count: 0,
+        total_time_seconds: 0,
+        total_topics: [],
+        achievements: [],
+        last_session_ended_at: null,
+        avatar_url: null,
+        auth_provider: 'manual',
+        external_auth_id: null,
+        clerk_user_id: `manual_${newUserId}`
+      });
+
+    if (error) {
+      console.error("Supabase error creating student:", error);
+      throw error;
+    }
+
+    console.log(`Created new student "${studentData.fullName}" with ID: ${newUserId}`);
+    return newUserId;
+  } catch (error) {
+    console.error("Error creating student:", error);
     throw error;
   }
 }

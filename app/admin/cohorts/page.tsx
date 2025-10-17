@@ -9,7 +9,8 @@ import {
   updateCohort, 
   deleteCohort, 
   addStudentToCohort, 
-  removeStudentFromCohort 
+  removeStudentFromCohort,
+  createStudent
 } from "@/lib/cohortService"
 import { Button } from "@/components/ui/ButtonComponent"
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/CardComponent"
@@ -46,7 +47,7 @@ const CohortsPage: React.FC = () => {
     try {
       setSelectedCohort(cohort)
       setLoading(true)
-      const students = await fetchCohortStudents(cohort.id)
+      const students = await fetchCohortStudents(cohort.name)
       setCohortStudents(students)
     } catch (error) {
       console.error('Error loading cohort students:', error)
@@ -61,23 +62,26 @@ const CohortsPage: React.FC = () => {
       const cohortName = prompt('Enter cohort name:');
       if (!cohortName?.trim()) return;
 
-      const studentIdsInput = prompt('Enter student IDs (comma-separated):');
-      if (!studentIdsInput?.trim()) return;
-
-      const studentIds = studentIdsInput.split(',').map(id => id.trim()).filter(id => id);
+      // Create empty cohort - students can be added later
+      await createCohort({ name: cohortName.trim(), studentIds: [] });
       
-      if (studentIds.length === 0) {
-        alert('Please enter at least one student ID');
-        return;
-      }
-
-      await createCohort({ name: cohortName.trim(), studentIds });
+      // Immediately add the new cohort to local state (Option 3 fix)
+      const newCohort: Cohort = {
+        id: Date.now(), // Generate unique numeric ID
+        name: cohortName.trim(),
+        description: '',
+        startDate: new Date().toISOString(),
+        endDate: '',
+        status: 'Active',
+        studentCount: 0,
+        instructor: '',
+        curriculum: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setCohorts(prevCohorts => [...prevCohorts, newCohort]);
       
-      // Refresh cohorts list
-      const updatedCohorts = await fetchCohorts();
-      setCohorts(updatedCohorts);
-      
-      alert(`Cohort "${cohortName}" created successfully!`);
+      alert(`Empty cohort "${cohortName}" created successfully! You can now add students to it.`);
     } catch (error) {
       console.error('Error creating cohort:', error);
       alert('Failed to create cohort. Please try again.');
@@ -136,14 +140,22 @@ const CohortsPage: React.FC = () => {
 
   const handleAddStudent = async (cohortName: string) => {
     try {
-      const studentId = prompt('Enter student ID to add to cohort:');
-      if (!studentId?.trim()) return;
+      const fullName = prompt('Enter student full name:');
+      if (!fullName?.trim()) return;
 
-      await addStudentToCohort(cohortName, studentId.trim());
+      const email = prompt('Enter student email:');
+      if (!email?.trim()) return;
+
+      // Create new student and add to cohort
+      const result = await createStudent({
+        email: email.trim(),
+        fullName: fullName.trim(),
+        cohort: cohortName
+      });
       
       // Refresh students list if this cohort is selected
       if (selectedCohort?.name === cohortName) {
-        const updatedStudents = await fetchCohortStudents(selectedCohort.id);
+        const updatedStudents = await fetchCohortStudents(selectedCohort.name);
         setCohortStudents(updatedStudents);
       }
       
@@ -151,10 +163,10 @@ const CohortsPage: React.FC = () => {
       const updatedCohorts = await fetchCohorts();
       setCohorts(updatedCohorts);
       
-      alert(`Student ${studentId} added to cohort "${cohortName}" successfully!`);
+      alert(`Student "${fullName}" created and added to cohort "${cohortName}" successfully!`);
     } catch (error) {
       console.error('Error adding student to cohort:', error);
-      alert('Failed to add student to cohort. Please try again.');
+      alert('Failed to create and add student to cohort. Please try again.');
     }
   };
 
@@ -181,7 +193,7 @@ const CohortsPage: React.FC = () => {
       
       // Refresh students list
       if (selectedCohort) {
-        const updatedStudents = await fetchCohortStudents(selectedCohort.id);
+        const updatedStudents = await fetchCohortStudents(selectedCohort.name);
         setCohortStudents(updatedStudents);
       }
       

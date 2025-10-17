@@ -457,7 +457,7 @@ describe('POST /api/admin/cohorts', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('At least one student ID must be provided');
+    expect(data.error).toBe('studentIds must be an array');
   });
 
   it('should successfully create cohort for admin', async () => {
@@ -482,6 +482,30 @@ describe('POST /api/admin/cohorts', () => {
     expect(data.success).toBe(true);
     expect(data.message).toBe('Cohort "Test Cohort" created successfully with 2 students');
     expect(mockCreateCohort).toHaveBeenCalledWith('Test Cohort', ['user-1', 'user-2']);
+  });
+
+  it('should successfully create empty cohort for admin', async () => {
+    mockRequireAuth.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+
+    mockCreateCohort.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/admin/cohorts', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Empty Cohort', studentIds: [] }),
+    });
+    const response = await postCohortsRoute(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.message).toBe('Cohort "Empty Cohort" created successfully with 0 students');
+    expect(mockCreateCohort).toHaveBeenCalledWith('Empty Cohort', []);
   });
 });
 
