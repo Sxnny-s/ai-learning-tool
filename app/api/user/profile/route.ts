@@ -104,9 +104,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate update data - expanded to include more profile fields
+    // WARNING: Drift risk.
+    // Names & email are Clerk-first in our architecture.
+    // Allowing { fullName, email } updates here writes DB directly and can bypass Clerk.
+    // Keep behavior for now (team decision pending).
+    // TODO(team): Decide whether to reject { fullName, email } here  I was too nervous to delete it lol and route changes through Clerk endpoints.
     const allowedFields = ["fullName", "email", "cohort", "avatarUrl"];
     const filteredData: Record<string, string> = {};
-    
+
     for (const [key, value] of Object.entries(updateData)) {
       if (allowedFields.includes(key) && value !== undefined && typeof value === 'string') {
         filteredData[key] = value;
