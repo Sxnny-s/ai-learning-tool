@@ -7,7 +7,7 @@ import { getAllUsers } from "@/lib/database/user";
  * GET /api/users
  * Get all users' profiles (admin only) 
  */ 
-export async function GET(_request: NextRequest) {
+export async function GET() {
     try {
         const user = await requireAuth();
       
