@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
+interface UpdateDataParams {
+  full_name?: string;
+  email?: string;
+  updated_at?: string;
+}
+
 /**
  * PUT /api/admin/students/[userId]
  * Update a student's information
@@ -18,7 +24,7 @@ import { supabaseAdmin } from "@/lib/supabase";
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const user = await requireAuth();
@@ -29,7 +35,7 @@ export async function PUT(
       );
     }
 
-    const { userId } = params;
+    const { userId } = await params;
     const body = await request.json();
     const { fullName, email } = body;
 
@@ -42,7 +48,7 @@ export async function PUT(
     }
 
     // Build update object with only provided fields
-    const updateData: any = {
+    const updateData: UpdateDataParams = {
       updated_at: new Date().toISOString()
     };
 

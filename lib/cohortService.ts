@@ -8,11 +8,29 @@
 // - DELETE /api/admin/cohorts/{cohortId} - Delete cohort
 
 import { Cohort, CohortStudent } from "@/types/data"
-import { generateSampleCohorts, generateSampleCohortStudents } from "@/types/data"
+import { CohortData } from "@/lib/database/cohort"
+
 
 // Placeholder API base URL - will be replaced with actual API endpoint
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const API_BASE_URL = '/api/admin/cohorts'
+
+interface StudentData {
+  id: string;
+  email: string;
+  fullName: string | undefined;
+  role: "student" | "admin";
+  createdAt: string;
+  updatedAt: string;
+  cohort: string | undefined;
+  sessionCount: number;
+  totalTimeSeconds: number;
+  totalTopics: string[];
+  achievements: unknown[];
+  lastSessionEndedAt: string | undefined;
+  avatarUrl: string | undefined;
+  authProvider: string;
+  externalAuthId: string | undefined;
+}
 
 /**
  * Fetch all cohorts
@@ -37,7 +55,7 @@ export const fetchCohorts = async (): Promise<Cohort[]> => {
     }
     
     // Convert API response to Cohort format expected by frontend
-    const cohorts: Cohort[] = result.data.map((cohortData: any) => ({
+    const cohorts: Cohort[] = result.data.map((cohortData: CohortData) => ({
       id: cohortData.name, // Use cohort name as ID for frontend compatibility
       name: cohortData.name,
       description: `Cohort with ${cohortData.studentCount} students`,
@@ -84,8 +102,8 @@ export const fetchCohortStudents = async (cohortName: string): Promise<CohortStu
     }
     
     // Convert API response to CohortStudent format expected by frontend
-    const students: CohortStudent[] = result.data.map((studentData: any) => ({
-      id: parseInt(studentData.id) || Math.floor(Math.random() * 1000),
+    const students: CohortStudent[] = result.data.map((studentData: StudentData) => ({
+      id: studentData.id,
       userId: studentData.id, // Preserve the actual database user_id for API operations
       name: studentData.fullName || 'Unknown',
       email: studentData.email,

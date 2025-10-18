@@ -1,243 +1,388 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { Cohort, CohortStudent } from "@/types/data"
-import { 
-  fetchCohorts, 
-  fetchCohortStudents, 
-  createCohort, 
-  updateCohort, 
-  deleteCohort, 
-  addStudentToCohort, 
+import React, { useState, useEffect } from "react";
+import { Cohort, CohortStudent } from "@/types/data";
+import {
+  fetchCohorts,
+  fetchCohortStudents,
+  createCohort,
+  updateCohort,
+  deleteCohort,
   removeStudentFromCohort,
   createStudent,
   updateStudent
-} from "@/lib/cohortService"
-import { Button } from "@/components/ui/ButtonComponent"
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/CardComponent"
-import { Badge } from "@/components/ui/BadgeComponent"
-import { Avatar } from "@/components/ui/AvatarComponent"
-import { IconUsers, IconCalendar, IconEye, IconEdit, IconTrash, IconPlus, IconSchool } from "@tabler/icons-react"
+} from "@/lib/cohortService";
+import { Button } from "@/components/ui/ButtonComponent";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/CardComponent";
+import { Badge } from "@/components/ui/BadgeComponent";
+import { Avatar } from "@/components/ui/AvatarComponent";
+import {
+  IconUsers,
+  IconCalendar,
+  IconEye,
+  IconEdit,
+  IconTrash,
+  IconPlus,
+  IconSchool
+} from "@tabler/icons-react";
+import {
+  CreateCohortModal,
+  EditCohortModal,
+  DeleteCohortModal,
+  AddStudentModal,
+  EditStudentModal,
+  DeleteStudentModal,
+  ViewStudentDetailsModal
+} from "@/components/admin/modals";
 
 const CohortsPage: React.FC = () => {
-  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null)
-  const [cohorts, setCohorts] = useState<Cohort[]>([])
-  const [cohortStudents, setCohortStudents] = useState<CohortStudent[]>([])
-  const [loading, setLoading] = useState(true)
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
+  const [cohortStudents, setCohortStudents] = useState<CohortStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal state management (Phase 4)
+  const [createCohortModalOpen, setCreateCohortModalOpen] = useState(false);
+  const [editCohortModalOpen, setEditCohortModalOpen] = useState(false);
+  const [deleteCohortModalOpen, setDeleteCohortModalOpen] = useState(false);
+  const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
+  const [editStudentModalOpen, setEditStudentModalOpen] = useState(false);
+  const [deleteStudentModalOpen, setDeleteStudentModalOpen] = useState(false);
+  const [viewStudentDetailsModalOpen, setViewStudentDetailsModalOpen] =
+    useState(false);
+
+  // Form data state
+  const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
+  const [deletingCohort, setDeletingCohort] = useState<Cohort | null>(null);
+  const [editingStudent, setEditingStudent] = useState<CohortStudent | null>(
+    null
+  );
+  const [deletingStudent, setDeletingStudent] = useState<CohortStudent | null>(
+    null
+  );
+  const [viewingStudent, setViewingStudent] = useState<CohortStudent | null>(
+    null
+  );
+
+  // Loading and error states
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState("");
 
   // Load cohorts on component mount
   useEffect(() => {
     const loadCohorts = async () => {
       try {
-        setLoading(true)
-        const cohortsData = await fetchCohorts()
-        setCohorts(cohortsData)
+        setLoading(true);
+        const cohortsData = await fetchCohorts();
+        setCohorts(cohortsData);
       } catch (error) {
-        console.error('Error loading cohorts:', error)
+        console.error("Error loading cohorts:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    loadCohorts()
-  }, [])
+    };
+    loadCohorts();
+  }, []);
 
   // TODO: Replace with actual API call when backend route is available
   // Backend ticket: [ticket-number] - Cohort route implementation
   // Expected endpoint: GET /api/admin/cohorts/{cohortId}/students
   const handleCohortSelect = async (cohort: Cohort) => {
     try {
-      setSelectedCohort(cohort)
-      setLoading(true)
-      const students = await fetchCohortStudents(cohort.name)
-      setCohortStudents(students)
+      setSelectedCohort(cohort);
+      setLoading(true);
+      const students = await fetchCohortStudents(cohort.name);
+      console.log("Students data:", students);
+      setCohortStudents(students);
     } catch (error) {
-      console.error('Error loading cohort students:', error)
+      console.error("Error loading cohort students:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // CRUD Operations Handlers
-  const handleCreateCohort = async () => {
+  const handleCreateCohort = () => {
+    setModalError("");
+    setCreateCohortModalOpen(true);
+  };
+
+  const handleCreateCohortSubmit = async (cohortName: string) => {
     try {
-      const cohortName = prompt('Enter cohort name:');
-      if (!cohortName?.trim()) return;
+      setModalLoading(true);
+      setModalError("");
 
       // Create empty cohort - students can be added later
-      await createCohort({ name: cohortName.trim(), studentIds: [] });
-      
+      await createCohort({ name: cohortName, studentIds: [] });
+
       // Immediately add the new cohort to local state (Option 3 fix)
       const newCohort: Cohort = {
         id: Date.now(), // Generate unique numeric ID
-        name: cohortName.trim(),
-        description: '',
+        name: cohortName,
+        description: "",
         startDate: new Date().toISOString(),
-        endDate: '',
-        status: 'Active',
+        endDate: "",
+        status: "Active",
         studentCount: 0,
-        instructor: '',
+        instructor: "",
         curriculum: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      setCohorts(prevCohorts => [...prevCohorts, newCohort]);
-      
-      alert(`Empty cohort "${cohortName}" created successfully! You can now add students to it.`);
+      setCohorts((prevCohorts) => [...prevCohorts, newCohort]);
+
+      setCreateCohortModalOpen(false);
+      // Note: Success feedback will be handled by the modal or toast system
     } catch (error) {
-      console.error('Error creating cohort:', error);
-      alert('Failed to create cohort. Please try again.');
+      console.error("Error creating cohort:", error);
+      setModalError("Failed to create cohort. Please try again.");
+    } finally {
+      setModalLoading(false);
     }
   };
 
-  const handleEditCohort = async (cohortName: string) => {
-    try {
-      const newName = prompt('Enter new cohort name:', cohortName);
-      if (!newName?.trim() || newName.trim() === cohortName) return;
+  const handleEditCohort = (cohortName: string) => {
+    const cohort = cohorts.find((c) => c.name === cohortName);
+    if (cohort) {
+      setEditingCohort(cohort);
+      setModalError("");
+      setEditCohortModalOpen(true);
+    }
+  };
 
-      await updateCohort(cohortName, newName.trim());
-      
+  const handleEditCohortSubmit = async (newCohortName: string) => {
+    if (!editingCohort) return;
+
+    try {
+      setModalLoading(true);
+      setModalError("");
+
+      await updateCohort(editingCohort.name, newCohortName);
+
       // Refresh cohorts list
       const updatedCohorts = await fetchCohorts();
       setCohorts(updatedCohorts);
-      
+
       // Update selected cohort if it was the one being edited
-      if (selectedCohort?.name === cohortName) {
-        const updatedCohort = updatedCohorts.find(c => c.name === newName.trim());
+      if (selectedCohort?.name === editingCohort.name) {
+        const updatedCohort = updatedCohorts.find(
+          (c) => c.name === newCohortName
+        );
         if (updatedCohort) {
           setSelectedCohort(updatedCohort);
         }
       }
-      
-      alert(`Cohort renamed from "${cohortName}" to "${newName}" successfully!`);
+
+      setEditCohortModalOpen(false);
+      setEditingCohort(null);
     } catch (error) {
-      console.error('Error updating cohort:', error);
-      alert('Failed to update cohort. Please try again.');
+      console.error("Error updating cohort:", error);
+      setModalError("Failed to update cohort. Please try again.");
+    } finally {
+      setModalLoading(false);
     }
   };
 
-  const handleDeleteCohort = async (cohortName: string) => {
-    try {
-      const confirmed = confirm(`Delete cohort "${cohortName}"? This will remove all students from this cohort.`);
-      if (!confirmed) return;
+  const handleDeleteCohort = (cohortName: string) => {
+    const cohort = cohorts.find((c) => c.name === cohortName);
+    if (cohort) {
+      setDeletingCohort(cohort);
+      setModalError("");
+      setDeleteCohortModalOpen(true);
+    }
+  };
 
-      await deleteCohort(cohortName);
-      
+  const handleDeleteCohortConfirm = async () => {
+    if (!deletingCohort) return;
+
+    try {
+      setModalLoading(true);
+      setModalError("");
+
+      await deleteCohort(deletingCohort.name);
+
       // Refresh cohorts list
       const updatedCohorts = await fetchCohorts();
       setCohorts(updatedCohorts);
-      
+
       // Clear selected cohort if it was the one being deleted
-      if (selectedCohort?.name === cohortName) {
+      if (selectedCohort?.name === deletingCohort.name) {
         setSelectedCohort(null);
         setCohortStudents([]);
       }
-      
-      alert(`Cohort "${cohortName}" deleted successfully!`);
+
+      setDeleteCohortModalOpen(false);
+      setDeletingCohort(null);
     } catch (error) {
-      console.error('Error deleting cohort:', error);
-      alert('Failed to delete cohort. Please try again.');
+      console.error("Error deleting cohort:", error);
+      setModalError("Failed to delete cohort. Please try again.");
+    } finally {
+      setModalLoading(false);
     }
   };
 
-  const handleAddStudent = async (cohortName: string) => {
-    try {
-      const fullName = prompt('Enter student full name:');
-      if (!fullName?.trim()) return;
+  const handleAddStudent = (cohortName: string) => {
+    if (selectedCohort?.name === cohortName) {
+      setModalError("");
+      setAddStudentModalOpen(true);
+    }
+  };
 
-      const email = prompt('Enter student email:');
-      if (!email?.trim()) return;
+  const handleAddStudentSubmit = async (studentData: {
+    fullName: string;
+    email: string;
+  }) => {
+    if (!selectedCohort) return;
+
+    try {
+      setModalLoading(true);
+      setModalError("");
 
       // Create new student and add to cohort
-      const result = await createStudent({
-        email: email.trim(),
-        fullName: fullName.trim(),
-        cohort: cohortName
+      await createStudent({
+        email: studentData.email,
+        fullName: studentData.fullName,
+        cohort: selectedCohort.name
       });
-      
+
       // Refresh students list if this cohort is selected
-      if (selectedCohort?.name === cohortName) {
-        const updatedStudents = await fetchCohortStudents(selectedCohort.name);
-        setCohortStudents(updatedStudents);
-      }
-      
+      const updatedStudents = await fetchCohortStudents(selectedCohort.name);
+      setCohortStudents(updatedStudents);
+
       // Refresh cohorts list to update student count
       const updatedCohorts = await fetchCohorts();
       setCohorts(updatedCohorts);
-      
-      alert(`Student "${fullName}" created and added to cohort "${cohortName}" successfully!`);
+
+      setAddStudentModalOpen(false);
     } catch (error) {
-      console.error('Error adding student to cohort:', error);
-      alert('Failed to create and add student to cohort. Please try again.');
+      console.error("Error adding student to cohort:", error);
+      setModalError(
+        "Failed to create and add student to cohort. Please try again."
+      );
+    } finally {
+      setModalLoading(false);
     }
   };
 
-  const handleEditStudent = async (studentId: string) => {
+  const handleEditStudent = (studentId: string) => {
+    const student = cohortStudents.find((s) => s.userId === studentId);
+    if (student) {
+      setEditingStudent(student);
+      setModalError("");
+      setEditStudentModalOpen(true);
+    }
+  };
+
+  const handleEditStudentSubmit = async (studentData: {
+    fullName: string;
+    email: string;
+  }) => {
+    if (!editingStudent) return;
+
     try {
-      const newName = prompt('Enter new student name:');
-      if (!newName?.trim()) return;
+      setModalLoading(true);
+      setModalError("");
 
       // Update student using the new API
-      await updateStudent(studentId, { fullName: newName.trim() });
-      
+      await updateStudent(editingStudent.userId, {
+        fullName: studentData.fullName
+      });
+
       // Refresh students list
       if (selectedCohort) {
         const updatedStudents = await fetchCohortStudents(selectedCohort.name);
         setCohortStudents(updatedStudents);
       }
-      
-      alert(`Student name updated to "${newName}" successfully!`);
+
+      setEditStudentModalOpen(false);
+      setEditingStudent(null);
     } catch (error) {
-      console.error('Error editing student:', error);
-      alert('Failed to edit student. Please try again.');
+      console.error("Error editing student:", error);
+      setModalError("Failed to edit student. Please try again.");
+    } finally {
+      setModalLoading(false);
     }
   };
 
-  const handleDeleteStudent = async (cohortName: string, studentId: string) => {
-    try {
-      const confirmed = confirm('Remove student from cohort?');
-      if (!confirmed) return;
+  const handleDeleteStudent = (cohortName: string, studentId: string) => {
+    const student = cohortStudents.find((s) => s.userId === studentId);
+    if (student) {
+      setDeletingStudent(student);
+      setModalError("");
+      setDeleteStudentModalOpen(true);
+    }
+  };
 
-      await removeStudentFromCohort(cohortName, studentId);
-      
+  const handleDeleteStudentConfirm = async () => {
+    if (!deletingStudent || !selectedCohort) return;
+
+    try {
+      setModalLoading(true);
+      setModalError("");
+
+      await removeStudentFromCohort(
+        selectedCohort.name,
+        deletingStudent.userId
+      );
+
       // Refresh students list
-      if (selectedCohort) {
-        const updatedStudents = await fetchCohortStudents(selectedCohort.name);
-        setCohortStudents(updatedStudents);
-      }
-      
+      const updatedStudents = await fetchCohortStudents(selectedCohort.name);
+      setCohortStudents(updatedStudents);
+
       // Refresh cohorts list to update student count
       const updatedCohorts = await fetchCohorts();
       setCohorts(updatedCohorts);
-      
-      alert(`Student removed from cohort "${cohortName}" successfully!`);
+
+      setDeleteStudentModalOpen(false);
+      setDeletingStudent(null);
     } catch (error) {
-      console.error('Error removing student from cohort:', error);
-      alert('Failed to remove student from cohort. Please try again.');
+      console.error("Error removing student from cohort:", error);
+      setModalError("Failed to remove student from cohort. Please try again.");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleViewStudent = (studentId: string) => {
+    const student = cohortStudents.find((s) => s.userId === studentId);
+    if (student) {
+      setViewingStudent(student);
+      setViewStudentDetailsModalOpen(true);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "Completed":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "Upcoming":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Cohorts Management</h2>
-          <p className="text-gray-600 mt-1">View and manage all student cohorts</p>
+          <h2 className="text-3xl font-bold text-gray-900">
+            Cohorts Management
+          </h2>
+          <p className="text-gray-600 mt-1">
+            View and manage all student cohorts
+          </p>
         </div>
-        <Button 
+        <Button
           className="bg-red-600 hover:bg-red-700"
           onClick={handleCreateCohort}
         >
@@ -252,7 +397,9 @@ const CohortsPage: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>All Cohorts</CardTitle>
-              <CardDescription>Select a cohort to view students</CardDescription>
+              <CardDescription>
+                Select a cohort to view students
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -263,62 +410,66 @@ const CohortsPage: React.FC = () => {
                   </div>
                 ) : (
                   cohorts.map((cohort) => (
-                  <div
-                    key={cohort.id}
-                    className={`p-4 rounded-lg border transition-colors ${
-                      selectedCohort?.id === cohort.id
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div 
-                        className="flex-1 cursor-pointer"
+                    <div
+                      key={cohort.id}
+                      className={`p-4 rounded-lg border transition-colors ${
+                        selectedCohort?.id === cohort.id
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => handleCohortSelect(cohort)}
+                        >
+                          <h3 className="font-semibold text-gray-900">
+                            {cohort.name}
+                          </h3>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={getStatusColor(cohort.status)}>
+                            {cohort.status}
+                          </Badge>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditCohort(cohort.name)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <IconEdit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteCohort(cohort.name)}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <IconTrash className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className="cursor-pointer"
                         onClick={() => handleCohortSelect(cohort)}
                       >
-                        <h3 className="font-semibold text-gray-900">{cohort.name}</h3>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(cohort.status)}>
-                          {cohort.status}
-                        </Badge>
-                        <div className="flex items-center space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEditCohort(cohort.name)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <IconEdit className="w-3 h-3" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDeleteCohort(cohort.name)}
-                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <IconTrash className="w-3 h-3" />
-                          </Button>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {cohort.description}
+                        </p>
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <div className="flex items-center">
+                            <IconUsers className="w-4 h-4 mr-1" />
+                            {cohort.studentCount} students
+                          </div>
+                          <div className="flex items-center">
+                            <IconCalendar className="w-4 h-4 mr-1" />
+                            {cohort.startDate}
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => handleCohortSelect(cohort)}
-                    >
-                      <p className="text-sm text-gray-600 mb-2">{cohort.description}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <IconUsers className="w-4 h-4 mr-1" />
-                          {cohort.studentCount} students
-                        </div>
-                        <div className="flex items-center">
-                          <IconCalendar className="w-4 h-4 mr-1" />
-                          {cohort.startDate}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                   ))
                 )}
               </div>
@@ -337,8 +488,8 @@ const CohortsPage: React.FC = () => {
                     <Badge className={getStatusColor(selectedCohort.status)}>
                       {selectedCohort.status}
                     </Badge>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleAddStudent(selectedCohort.name)}
                       className="text-green-600 border-green-600 hover:bg-green-50"
@@ -349,7 +500,8 @@ const CohortsPage: React.FC = () => {
                   </div>
                 </CardTitle>
                 <CardDescription>
-                  {cohortStudents.length} students enrolled • Instructor: {selectedCohort.instructor}
+                  {cohortStudents.length} students enrolled • Instructor:{" "}
+                  {selectedCohort.instructor}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -361,12 +513,19 @@ const CohortsPage: React.FC = () => {
                     </div>
                   ) : cohortStudents.length > 0 ? (
                     cohortStudents.map((student) => (
-                      <div key={student.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div
+                        key={student.userId}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                      >
                         <div className="flex items-center space-x-3">
                           <Avatar name={student.name} size="sm" />
                           <div>
-                            <p className="font-medium text-gray-900">{student.name}</p>
-                            <p className="text-sm text-gray-500">{student.email}</p>
+                            <p className="font-medium text-gray-900">
+                              {student.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {student.email}
+                            </p>
                             <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
                               <span>Enrolled: {student.enrollmentDate}</span>
                               {student.graduationDate && (
@@ -378,37 +537,48 @@ const CohortsPage: React.FC = () => {
                         <div className="text-right">
                           <div className="flex items-center space-x-4">
                             <div className="text-center">
-                              <p className="text-sm font-medium text-gray-900">{student.cohortProgress}%</p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {student.cohortProgress}%
+                              </p>
                               <p className="text-xs text-gray-500">Progress</p>
                             </div>
                             <div className="text-center">
                               <p className="text-sm font-medium text-gray-900">
-                                {student.assignmentsCompleted}/{student.totalAssignments}
+                                {student.assignmentsCompleted}/
+                                {student.totalAssignments}
                               </p>
-                              <p className="text-xs text-gray-500">Assignments</p>
+                              <p className="text-xs text-gray-500">
+                                Assignments
+                              </p>
                             </div>
                             <div className="flex items-center space-x-1">
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  // View student details - could open a modal or navigate to student page
-                                  alert(`View details for ${student.name} (${student.email})`);
-                                }}
+                                onClick={() =>
+                                  handleViewStudent(student.userId)
+                                }
                               >
                                 <IconEye className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => handleEditStudent(student.userId)}
+                                onClick={() =>
+                                  handleEditStudent(student.userId)
+                                }
                               >
                                 <IconEdit className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => handleDeleteStudent(selectedCohort.name, student.userId)}
+                                onClick={() =>
+                                  handleDeleteStudent(
+                                    selectedCohort.name,
+                                    student.userId
+                                  )
+                                }
                                 className="text-red-600 hover:text-red-700"
                               >
                                 <IconTrash className="w-4 h-4" />
@@ -432,16 +602,99 @@ const CohortsPage: React.FC = () => {
               <CardContent className="flex items-center justify-center h-64">
                 <div className="text-center text-gray-500">
                   <IconSchool className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">Select a cohort to view students</p>
-                  <p className="text-sm">Choose a cohort from the list to see enrolled students</p>
+                  <p className="text-lg font-medium">
+                    Select a cohort to view students
+                  </p>
+                  <p className="text-sm">
+                    Choose a cohort from the list to see enrolled students
+                  </p>
                 </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
-    </div>
-  )
-}
 
-export default CohortsPage
+      {/* Modal Components */}
+      <CreateCohortModal
+        isOpen={createCohortModalOpen}
+        onClose={() => setCreateCohortModalOpen(false)}
+        onSubmit={handleCreateCohortSubmit}
+        loading={modalLoading}
+        error={modalError}
+      />
+
+      <EditCohortModal
+        isOpen={editCohortModalOpen}
+        onClose={() => {
+          setEditCohortModalOpen(false);
+          setEditingCohort(null);
+        }}
+        onSubmit={handleEditCohortSubmit}
+        currentCohortName={editingCohort?.name || ""}
+        loading={modalLoading}
+        error={modalError}
+      />
+
+      <DeleteCohortModal
+        isOpen={deleteCohortModalOpen}
+        onClose={() => {
+          setDeleteCohortModalOpen(false);
+          setDeletingCohort(null);
+        }}
+        onConfirm={handleDeleteCohortConfirm}
+        cohortName={deletingCohort?.name || ""}
+        studentCount={deletingCohort?.studentCount || 0}
+        loading={modalLoading}
+      />
+
+      <AddStudentModal
+        isOpen={addStudentModalOpen}
+        onClose={() => setAddStudentModalOpen(false)}
+        onSubmit={handleAddStudentSubmit}
+        cohortName={selectedCohort?.name || ""}
+        loading={modalLoading}
+        error={modalError}
+      />
+
+      <EditStudentModal
+        isOpen={editStudentModalOpen}
+        onClose={() => {
+          setEditStudentModalOpen(false);
+          setEditingStudent(null);
+        }}
+        onSubmit={handleEditStudentSubmit}
+        currentStudent={{
+          name: editingStudent?.name || "",
+          email: editingStudent?.email || ""
+        }}
+        loading={modalLoading}
+        error={modalError}
+      />
+
+      <DeleteStudentModal
+        isOpen={deleteStudentModalOpen}
+        onClose={() => {
+          setDeleteStudentModalOpen(false);
+          setDeletingStudent(null);
+        }}
+        onConfirm={handleDeleteStudentConfirm}
+        studentName={deletingStudent?.name || ""}
+        studentEmail={deletingStudent?.email || ""}
+        cohortName={selectedCohort?.name || ""}
+        loading={modalLoading}
+      />
+
+      <ViewStudentDetailsModal
+        isOpen={viewStudentDetailsModalOpen}
+        onClose={() => {
+          setViewStudentDetailsModalOpen(false);
+          setViewingStudent(null);
+        }}
+        student={viewingStudent}
+      />
+    </div>
+  );
+};
+
+export default CohortsPage;

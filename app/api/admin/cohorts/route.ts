@@ -6,7 +6,7 @@ import { getCohorts, createCohort, updateCohort, deleteCohort } from "@/lib/data
  * GET /api/admin/cohorts
  * Get all cohorts with student counts (admin only)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await requireAuth();
     

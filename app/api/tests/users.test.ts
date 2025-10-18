@@ -398,7 +398,7 @@ describe('PATCH /api/user/progress', () => {
     });
     
     const response = await patchProgress(request);
-    const data = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(mockUpdateUserProgress).toHaveBeenCalledWith('user-1', {
@@ -438,7 +438,7 @@ describe('PATCH /api/user/progress', () => {
     });
     
     const response = await patchProgress(request);
-    const data = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(mockUpdateUserProgress).toHaveBeenCalledWith('user-1', {

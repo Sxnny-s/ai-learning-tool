@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { getStudentsByCohort, addStudentToCohort, removeStudentFromCohort } from "@/lib/database/cohort";
+import {
+  getStudentsByCohort,
+  addStudentToCohort,
+  removeStudentFromCohort
+} from "@/lib/database/cohort";
 
 /**
  * GET /api/admin/cohorts/[cohortName]/students
@@ -8,11 +12,11 @@ import { getStudentsByCohort, addStudentToCohort, removeStudentFromCohort } from
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { cohortName: string } }
+  { params }: { params: Promise<{ cohortName: string }> }
 ) {
   try {
     const user = await requireAuth();
-    
+
     if (user.role !== "admin") {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
@@ -20,7 +24,7 @@ export async function GET(
       );
     }
 
-    const { cohortName } = params;
+    const { cohortName } = await params;
 
     if (!cohortName) {
       return NextResponse.json(
@@ -39,10 +43,12 @@ export async function GET(
       );
     }
 
-    console.log(`Admin ${user.id} fetched ${students.length} students from cohort: ${cohortName}`);
+    console.log(
+      `Admin ${user.id} fetched ${students.length} students from cohort: ${cohortName}`
+    );
 
     // Map database fields to camelCase for frontend
-    const mappedStudents = students.map(student => ({
+    const mappedStudents = students.map((student) => ({
       id: student.user_id,
       email: student.email,
       fullName: student.full_name,
@@ -65,7 +71,10 @@ export async function GET(
       data: mappedStudents
     });
   } catch (error) {
-    console.error("Error in GET /api/admin/cohorts/[cohortName]/students:", error);
+    console.error(
+      "Error in GET /api/admin/cohorts/[cohortName]/students:",
+      error
+    );
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -79,11 +88,11 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { cohortName: string } }
+  { params }: { params: Promise<{ cohortName: string }> }
 ) {
   try {
     const user = await requireAuth();
-    
+
     if (user.role !== "admin") {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
@@ -91,7 +100,7 @@ export async function POST(
       );
     }
 
-    const { cohortName } = params;
+    const { cohortName } = await params;
 
     if (!cohortName) {
       return NextResponse.json(
@@ -104,7 +113,11 @@ export async function POST(
     const { studentId } = body;
 
     // Validate request body
-    if (!studentId || typeof studentId !== 'string' || studentId.trim() === '') {
+    if (
+      !studentId ||
+      typeof studentId !== "string" ||
+      studentId.trim() === ""
+    ) {
       return NextResponse.json(
         { error: "Student ID is required and must be a non-empty string" },
         { status: 400 }
@@ -114,16 +127,23 @@ export async function POST(
     // Add student to cohort
     await addStudentToCohort(cohortName, studentId.trim());
 
-    console.log(`Admin ${user.id} added student ${studentId} to cohort "${cohortName}"`);
+    console.log(
+      `Admin ${user.id} added student ${studentId} to cohort "${cohortName}"`
+    );
 
     return NextResponse.json({
       success: true,
       message: `Student ${studentId} added to cohort "${cohortName}" successfully`
     });
   } catch (error) {
-    console.error("Error in POST /api/admin/cohorts/[cohortName]/students:", error);
+    console.error(
+      "Error in POST /api/admin/cohorts/[cohortName]/students:",
+      error
+    );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error"
+      },
       { status: 500 }
     );
   }
@@ -135,11 +155,11 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { cohortName: string } }
+  { params }: { params: Promise<{ cohortName: string }> }
 ) {
   try {
     const user = await requireAuth();
-    
+
     if (user.role !== "admin") {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
@@ -147,7 +167,7 @@ export async function DELETE(
       );
     }
 
-    const { cohortName } = params;
+    const { cohortName } = await params;
 
     if (!cohortName) {
       return NextResponse.json(
@@ -157,10 +177,10 @@ export async function DELETE(
     }
 
     const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get('studentId');
+    const studentId = searchParams.get("studentId");
 
     // Validate student ID
-    if (!studentId || studentId.trim() === '') {
+    if (!studentId || studentId.trim() === "") {
       return NextResponse.json(
         { error: "Student ID is required as query parameter" },
         { status: 400 }
@@ -170,16 +190,23 @@ export async function DELETE(
     // Remove student from cohort
     await removeStudentFromCohort(cohortName, studentId.trim());
 
-    console.log(`Admin ${user.id} removed student ${studentId} from cohort "${cohortName}"`);
+    console.log(
+      `Admin ${user.id} removed student ${studentId} from cohort "${cohortName}"`
+    );
 
     return NextResponse.json({
       success: true,
       message: `Student ${studentId} removed from cohort "${cohortName}" successfully`
     });
   } catch (error) {
-    console.error("Error in DELETE /api/admin/cohorts/[cohortName]/students:", error);
+    console.error(
+      "Error in DELETE /api/admin/cohorts/[cohortName]/students:",
+      error
+    );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error"
+      },
       { status: 500 }
     );
   }
