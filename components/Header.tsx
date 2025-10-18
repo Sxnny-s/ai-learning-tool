@@ -23,7 +23,8 @@ import {
   Settings,
   Trophy,
   User,
-  Zap
+  Zap,
+  Cpu
 } from "lucide-react";
 
 const mockUser = {
@@ -98,13 +99,24 @@ export function Header() {
                 variant="ghost"
                 className={cn(
                   "text-foreground hover:text-primary",
-                  pathname === "#" && "text-primary"
+                  pathname === "/ui-docs" && "text-primary"
                 )}
                 onClick={() => router.push("/ui-docs")}
               >
                 <BookOpen className="h-4 w-4 mr-2" />
                 UI Docs
               </Button>
+              <Button
+  variant="ghost"
+  className={cn(
+    "text-foreground hover:text-primary",
+    pathname === "/aitutor" && "text-primary"
+  )}
+  onClick={() => router.push("/aitutor")}
+>
+  <Cpu className="h-4 w-4 mr-2" />
+  AI Tutor
+</Button>
               <Button
                 variant="ghost"
                 className={cn(
