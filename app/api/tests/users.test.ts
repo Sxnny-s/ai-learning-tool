@@ -41,8 +41,8 @@ describe('GET /api/users', () => {
       role: 'student',
     });
 
-    const request = new NextRequest('http://localhost:3000/api/users');
-    const response = await getUsers(request);
+    // const request = new NextRequest('http://localhost:3000/api/users');
+    const response = await getUsers();
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -60,8 +60,8 @@ describe('GET /api/users', () => {
 
     mockGetAllUsers.mockResolvedValue(null as unknown as DatabaseUser[]);
 
-    const request = new NextRequest('http://localhost:3000/api/users');
-    const response = await getUsers(request);
+    // const request = new NextRequest('http://localhost:3000/api/users');
+    const response = await getUsers();
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -79,8 +79,8 @@ describe('GET /api/users', () => {
 
     mockGetAllUsers.mockResolvedValue([]);
 
-    const request = new NextRequest('http://localhost:3000/api/users');
-    const response = await getUsers(request);
+    // const request = new NextRequest('http://localhost:3000/api/users');
+    const response = await getUsers();
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -138,8 +138,8 @@ describe('GET /api/users', () => {
 
     mockGetAllUsers.mockResolvedValue(mockUsers);
 
-    const request = new NextRequest('http://localhost:3000/api/users');
-    const response = await getUsers(request);
+    // const request = new NextRequest('http://localhost:3000/api/users');
+    const response = await getUsers();
     const data = await response.json();
 
     expect(response.status).toBe(200);
