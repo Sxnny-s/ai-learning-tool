@@ -22,7 +22,7 @@ export default function RedirectOnAuth() {
   useEffect(() => {
     if (!isSignedIn) return;
     const role = getRoleFromUser(user);
-    router.replace(role === "admin" ? "/admin" : "/chat");
+    router.replace(role === "admin" ? "/admin" : "/student");
   }, [isSignedIn, user, router]);
 
   return null;
