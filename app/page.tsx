@@ -33,7 +33,7 @@ export default async function HomePage() {
   if (userId) {
     const role = getRoleFromClaims(sessionClaims);
     if (role === "admin") redirect("/admin");
-    redirect("/chat");
+    redirect("/student");
   }
 
   return (

@@ -39,7 +39,7 @@ export default clerkMiddleware(async (auth, req) => {
     const { userId, sessionClaims } = await auth();
     if (userId) {
       const role = getRoleFromClaims(sessionClaims);
-      const to = role === "admin" ? "/admin" : "/chat";
+      const to = role === "admin" ? "/admin" : "/student";
       return NextResponse.redirect(new URL(to, req.url));
     }
     return NextResponse.next();

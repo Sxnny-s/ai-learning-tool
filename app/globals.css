@@ -123,3 +123,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Implement syntax highlighting for code blocks, `code` tags will have classes like language-js, language-python, etc. Implement codeblocks for different languages. */
+pre, pre code {
+  border-radius: 0 !important; /* Square corners */
+  background-color: #f3f4f6 !important; /* Use a light gray bg for all code blocks as base */
+  padding-top: 1.25rem !important;  /* 20px */
+  padding-bottom: 1.25rem !important;
+  padding-left: 1rem !important;   /* 16px */
+  padding-right: 1rem !important;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Remove default background and border radius for code within pre blocks */
+pre code {
+  background: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Make sure inline code still looks good and distinct */
+:not(pre) > code {
+  border-radius: 0.25rem;
+  background: #f3f4f6;
+  padding: 0.15em 0.4em;
+}
+
+code {
+  color: black;
+}
