@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react"
 import { Cohort, CohortStudent } from "@/types/data"
 import { fetchCohorts, fetchCohortStudents } from "@/lib/cohortService"
-import { Button } from "@/components/ui/ButtonComponent"
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/CardComponent"
-import { Badge } from "@/components/ui/BadgeComponent"
-import { Avatar } from "@/components/ui/AvatarComponent"
+import { Button } from "../components/ui/ButtonComponent"
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../components/ui/CardComponent"
+import { Badge } from "../components/ui/BadgeComponent"
+import { Avatar } from "../components/ui/AvatarComponent"
 import { IconUsers, IconCalendar, IconEye, IconEdit, IconTrash, IconPlus, IconSchool } from "@tabler/icons-react"
 
 const CohortsPage: React.FC = () => {

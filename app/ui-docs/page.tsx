@@ -5,40 +5,40 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger
-} from "@/components/ui/accordion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from "../components/ui/accordion";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious
-} from "@/components/ui/carousel";
+} from "../components/ui/carousel";
 import {
   ChartContainer
-} from "@/components/ui/chart";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "../components/ui/chart";
+import { Checkbox } from "../components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from "@/components/ui/collapsible";
+} from "../components/ui/collapsible";
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList
-} from "@/components/ui/command";
+} from "../components/ui/command";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger
-} from "@/components/ui/context-menu";
+} from "../components/ui/context-menu";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger
-} from "@/components/ui/dialog";
+} from "../components/ui/dialog";
 import {
   Drawer,
   DrawerClose,
@@ -56,33 +56,33 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger
-} from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
+} from "../components/ui/drawer";
+import { Input } from "../components/ui/input";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot
-} from "@/components/ui/input-otp";
-import { Label } from "@/components/ui/label";
+} from "../components/ui/input-otp";
+import { Label } from "../components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
-} from "@/components/ui/popover";
-import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+} from "../components/ui/popover";
+import { Progress } from "../components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
+} from "../components/ui/select";
+import { Separator } from "../components/ui/separator";
+import { Skeleton } from "../components/ui/skeleton";
+import { Slider } from "../components/ui/slider";
+import { Switch } from "../components/ui/switch";
 import {
   Table,
   TableBody,
@@ -90,15 +90,15 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+} from "../components/ui/table";
+import { Textarea } from "../components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from "@/components/ui/tooltip";
+} from "../components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {

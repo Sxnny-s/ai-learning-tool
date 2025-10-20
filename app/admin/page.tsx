@@ -5,15 +5,15 @@ import {
   generateSampleTopicDifficulties,
   generateSampleHotTopics
 } from "@/types/data"
-import { Button } from "../../components/ui/ButtonComponent"
-import { StatsCard } from "../../components/ui/StatsCard"
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../../components/ui/CardComponent"
-import { Badge } from "../../components/ui/BadgeComponent"
-import { Avatar } from "../../components/ui/AvatarComponent"
-import { ClassOverview } from "../../components/instructor/ClassOverview"
-import { TopicDifficultyAnalysis } from "../../components/instructor/TopicDifficultyAnalysis"
-import { StrugglingStudentsAlert } from "../../components/instructor/StrugglingStudentsAlert"
-import { HotTopics } from "../../components/instructor/HotTopics"
+import { Button } from "../components/ui/ButtonComponent"
+import { StatsCard } from "../components/ui/StatsCard"
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../components/ui/CardComponent"
+import { Badge } from "../components/ui/BadgeComponent"
+import { Avatar } from "../components/ui/AvatarComponent"
+import { ClassOverview } from "../components/instructor/ClassOverview"
+import { TopicDifficultyAnalysis } from "../components/instructor/TopicDifficultyAnalysis"
+import { StrugglingStudentsAlert } from "../components/instructor/StrugglingStudentsAlert"
+import { HotTopics } from "../components/instructor/HotTopics"
 import { IconUsers, IconBook, IconMessageCircle, IconTrendingUp, IconPlus, IconEye, IconEdit, IconTrash } from "@tabler/icons-react"
 
 interface Props {

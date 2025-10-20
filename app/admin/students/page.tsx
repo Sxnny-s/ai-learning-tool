@@ -1,12 +1,12 @@
 "use client"
 import React, { useState } from "react"
-import { Button } from "../../../components/ui/ButtonComponent"
-import { Input } from "../../../components/ui/InputComponent"
-import { StatsCard } from "../../../components/ui/StatsCard"
+import { Button } from "../../components/ui/ButtonComponent"
+import { Input } from "../../components/ui/InputComponent"
+import { StatsCard } from "../../components/ui/StatsCard"
 import { StudentCard } from "../../../components/admin/StudentCard"
 import { StudentTable } from "../../../components/admin/StudentTable"
 import { Student, generateSampleStudents, generateSampleStudentProgress } from "@/types/data"
-import { StudentProgressTracker } from "../../../components/instructor/StudentProgressTracker"
+import { StudentProgressTracker } from "../../components/instructor/StudentProgressTracker"
 import { IconSearch, IconUsers, IconBook, IconTrendingUp, IconClock } from "@tabler/icons-react"
 
 interface Props {
