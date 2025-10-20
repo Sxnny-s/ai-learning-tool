@@ -402,6 +402,7 @@ export interface Cohort {
 }
 
 export interface CohortStudent extends Student {
+  userId: string; // Add actual database user_id for API operations
   cohortId: number;
   enrollmentDate: string;
   graduationDate?: string;
@@ -693,6 +694,7 @@ export const generateSampleCohortStudents = (cohortId: number): CohortStudent[] 
   const baseStudents = generateSampleStudents();
   return baseStudents.map((student) => ({
     ...student,
+    userId: `sample_${student.id}`, // Add userId for sample data
     cohortId,
     enrollmentDate: "2024-01-15",
     graduationDate: cohortId === 3 ? "2023-12-15" : undefined,

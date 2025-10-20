@@ -59,6 +59,8 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import { ChatBotFunctional } from "@/components/student/OpenAIChatBot";
+
 
 const chartData = [
   { day: "Mon", lessons: 10, flashCards: 1, chats: 3 },
@@ -97,17 +99,17 @@ const pieData = [
   }
 ];
 
-export const StudentDashboard = () => {
+const StudentDashboard = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [chatMessage, setChatMessage] = useState("");
 
   return (
-    <>
+    <main className="flex-1 p-5">
       <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="students">Lessons</TabsTrigger>
-          <TabsTrigger value="courses">Chat</TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="analytics">Stats</TabsTrigger>
         </TabsList>
 
@@ -230,85 +232,9 @@ export const StudentDashboard = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="courses" className="space-y-6">
+        <TabsContent value="chat" className="space-y-6">
           {/* AI Chatbot Interface */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                AI Learning Assistant
-              </CardTitle>
-              <CardDescription>
-                Interactive chatbot for student support and tutoring
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ScrollArea className="h-[300px] w-full border rounded-md p-4">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                      <p className="text-sm">
-                        Hello! I&apos;m your AI learning assistant. How can I
-                        help you with your studies today?
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 justify-end">
-                    <div className="bg-primary text-primary-foreground rounded-lg p-3 max-w-[80%]">
-                      <p className="text-sm">
-                        Can you help me understand quadratic equations?
-                      </p>
-                    </div>
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                      <p className="text-sm">
-                        Quadratic equations are polynomial equations of degree
-                        2. They have the general form ax² + bx + c = 0. Would
-                        you like me to walk you through solving one step by
-                        step?
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </ScrollArea>
-
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Ask me anything about your studies..."
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  className="flex-1"
-                />
-                <Button size="icon" variant="outline">
-                  <Mic className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="outline">
-                  <Camera className="h-4 w-4" />
-                </Button>
-                <Button size="icon">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ChatBotFunctional />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -611,6 +537,8 @@ export const StudentDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </>
+    </main>
   );
 };
+
+export default StudentDashboard
