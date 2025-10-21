@@ -1,9 +1,9 @@
 "use client"
 import React, { useState } from "react"
-import { Button } from "../../../components/ui/ButtonComponent"
-import { Input } from "../../../components/ui/InputComponent"
-import { StatsCard } from "../../../components/ui/StatsCard"
-import { LessonCard } from "../../../components/admin/LessonCard"
+import { Button } from "../../components/ui/ButtonComponent"
+import { Input } from "../../components/ui/InputComponent"
+import { StatsCard } from "../../components/ui/StatsCard"
+import { LessonCard } from "../../components/admin/LessonCard"
 import { Lesson, generateSampleLessons } from "@/types/data"
 
 interface Props {

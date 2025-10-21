@@ -1,5 +1,5 @@
 import React from "react";
-import { StudentCard } from "../../../components/admin/StudentCard";
+import { StudentCard } from "../../../app/components/admin/StudentCard";
 import { Student } from "../../../types/data";
 
 describe("StudentCard Component", () => {

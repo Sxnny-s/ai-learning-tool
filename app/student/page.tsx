@@ -1,34 +1,31 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "../components/ui/badge";
+import { Calendar } from "../components/ui/calendar";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle
-} from "@/components/ui/card";
+} from "../components/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious
-} from "@/components/ui/carousel";
+} from "../components/ui/carousel";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent
-} from "@/components/ui/chart";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "../components/ui/chart";
+import { Label } from "../components/ui/label";
+import { Progress } from "../components/ui/progress";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Separator } from "../components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import {
   Activity,
   BookOpen,
@@ -59,7 +56,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
-import { ChatBotFunctional } from "@/components/student/OpenAIChatBot";
+import { ChatBotFunctional } from "@/app/chat/OpenAIChatBot";
 
 
 const chartData = [

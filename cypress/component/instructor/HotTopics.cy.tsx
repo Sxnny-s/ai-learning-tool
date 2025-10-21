@@ -1,5 +1,5 @@
 import React from "react";
-import { HotTopics } from "../../../components/instructor/HotTopics";
+import { HotTopics } from "../../../app/components/instructor/HotTopics";
 import { HotTopic } from "../../../types/data";
 
 describe("HotTopics Component", () => {

@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import React, { useState, useEffect } from "react";
 import { Cohort, CohortStudent } from "@/types/data";
 import {
@@ -12,16 +11,16 @@ import {
   createStudent,
   updateStudent
 } from "@/lib/cohortService";
-import { Button } from "@/components/ui/ButtonComponent";
+import { Button } from "../../components/ui/ButtonComponent";
 import {
   Card,
   CardHeader,
   CardContent,
   CardTitle,
   CardDescription
-} from "@/components/ui/CardComponent";
-import { Badge } from "@/components/ui/BadgeComponent";
-import { Avatar } from "@/components/ui/AvatarComponent";
+} from "../../components/ui/CardComponent";
+import { Badge } from "../../components/ui/BadgeComponent";
+import { Avatar } from "../../components/ui/AvatarComponent";
 import {
   IconUsers,
   IconCalendar,
@@ -39,7 +38,8 @@ import {
   EditStudentModal,
   DeleteStudentModal,
   ViewStudentDetailsModal
-} from "@/components/admin/modals";
+} from "../../components/admin/modals";
+
 
 const CohortsPage: React.FC = () => {
   const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);

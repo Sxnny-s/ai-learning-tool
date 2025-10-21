@@ -1,5 +1,5 @@
 import React from "react";
-import { ConversationCard } from "../../../components/admin/ConversationCard";
+import { ConversationCard } from "../../../app/components/admin/ConversationCard";
 import { Conversation } from "../../../types/data";
 
 describe("ConversationCard Component", () => {

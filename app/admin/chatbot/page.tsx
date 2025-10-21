@@ -1,4 +1,4 @@
-import ChatbotComponent from "../../../components/admin/ChatbotComponent";
+import ChatbotComponent from "../../components/admin/ChatbotComponent";
 
 export default function ChatbotPage() {
   return (

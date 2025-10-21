@@ -1,5 +1,5 @@
 import React from "react";
-import { ClassOverview } from "../../../components/instructor/ClassOverview";
+import { ClassOverview } from "../../../app/components/instructor/ClassOverview";
 
 describe("ClassOverview Component", () => {
   // Mock class overview data for testing
