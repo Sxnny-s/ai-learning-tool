@@ -114,7 +114,10 @@ See [`docs/USER_SCHEMA.md`](docs/USER_SCHEMA.md) for complete schema documentati
 │   └── tests/
 │       ├── helpers/
 │       │   └── dbTestUtils.ts # Test utilities
-│       └── users.test.ts    # API route tests
+│       ├── cohorts.test.ts  # Cohort API route tests
+│       ├── invite.test.ts   # Invite API route tests
+│       ├── name.test.ts     # Name API route tests
+│       └── user-name.test.ts # User name API route tests
 ├── docs/
 │   ├── USER_SCHEMA.md       # Database schema documentation
 │   └── SEEDING_GUIDE.md     # Data seeding instructions
