@@ -3,7 +3,7 @@ import React, { useState } from "react"
 import { Button } from "../../components/ui/ButtonComponent"
 import { Input } from "../../components/ui/InputComponent"
 import { StatsCard } from "../../components/ui/StatsCard"
-import { ConversationCard } from "../../../components/admin/ConversationCard"
+import { ConversationCard } from "../../components/admin/ConversationCard"
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../../components/ui/CardComponent"
 import { Conversation, generateSampleConversations } from "@/types/data"
 
