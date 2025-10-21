@@ -1,5 +1,5 @@
 import React from "react";
-import { StudentProgressTracker } from "../../components/instructor/StudentProgressTracker";
+import { StudentProgressTracker } from "../../../app/components/instructor/StudentProgressTracker";
 import { StudentProgress } from "../../../types/data";
 
 describe("StudentProgressTracker Component", () => {

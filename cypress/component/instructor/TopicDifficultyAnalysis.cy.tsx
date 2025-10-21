@@ -1,5 +1,5 @@
 import React from "react";
-import { TopicDifficultyAnalysis } from "../../components/instructor/TopicDifficultyAnalysis";
+import { TopicDifficultyAnalysis } from "../../../app/components/instructor/TopicDifficultyAnalysis";
 import { TopicDifficulty } from "../../../types/data";
 
 describe("TopicDifficultyAnalysis Component", () => {

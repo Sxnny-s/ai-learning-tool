@@ -1,5 +1,5 @@
 import React from "react";
-import { StrugglingStudentsAlert } from "../../components/instructor/StrugglingStudentsAlert";
+import { StrugglingStudentsAlert } from "../../../app/components/instructor/StrugglingStudentsAlert";
 import { StrugglingStudent } from "../../../types/data";
 
 describe("StrugglingStudentsAlert Component", () => {

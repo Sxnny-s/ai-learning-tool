@@ -1,5 +1,5 @@
 import React from "react";
-import { StudentTable } from "../../../components/admin/StudentTable";
+import { StudentTable } from "../../../app/components/admin/StudentTable";
 import { Student } from "../../../types/data";
 
 describe("StudentTable Component", () => {
