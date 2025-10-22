@@ -11,8 +11,7 @@ import {
 } from "../components/ui/card";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { Bot, User, Mic, Camera, Send, Loader2 } from "lucide-react";
-import { Input } from "../components/ui/input";
+import { Bot, User, Send, Loader2 } from "lucide-react";
 import { Textarea } from "../components/ui/textarea";
 import { Button } from "../components/ui/button";
 import Markdown from "react-markdown";

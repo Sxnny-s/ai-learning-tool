@@ -31,16 +31,12 @@ import {
   BookOpen,
   Bot,
   CalendarIcon,
-  Camera,
   CheckCircle,
   Clock,
-  Mic,
-  Send,
   Star,
   Target,
   TrendingUp,
   Upload,
-  User,
   Users,
   Zap
 } from "lucide-react";
@@ -98,7 +94,6 @@ const pieData = [
 
 const StudentDashboard = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [chatMessage, setChatMessage] = useState("");
 
   return (
     <main className="flex-1 p-5">
