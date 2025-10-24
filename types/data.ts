@@ -1,7 +1,7 @@
 // Consolidated data types for the AI Learning Platform
 
 export interface Student {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
   avatar?: string;
@@ -12,6 +12,10 @@ export interface Student {
   totalLessons: number;
   lastActive: string;
   streak: number;
+  cohort?: string | null;
+  sessionCount?: number;
+  totalTimeSeconds?: number;
+  topics?: string[];
 }
 
 export interface Lesson {
@@ -385,6 +389,63 @@ export interface StudentProgress {
     inProgress: string[];
   };
 }
+
+// Difficulty Feedback System Interfaces
+export interface DifficultyFeedback {
+  id: string;
+  userId: string;
+  cohortId: string;
+  selectedTopics: string[];
+  customOther?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DifficultyInsight {
+  topicName: string;
+  count: number;
+  percentage: number;
+  customResponses?: string[]; // For "Other" category
+}
+
+export interface AddressedTopic {
+  id: string;
+  cohortId: string;
+  topicName: string;
+  addressedBy: string;
+  addressedAt: string;
+  isActive: boolean;
+  notes?: string;
+}
+
+export interface DifficultyFeedbackSubmission {
+  selectedTopics: string[];
+  customOther?: string;
+}
+
+export interface MarkTopicAddressedRequest {
+  cohortId: string;
+  topicName: string;
+  notes?: string;
+}
+
+// Hardcoded topics for MVP based on current lesson plans
+export const DIFFICULTY_TOPICS = [
+  "Variables & Data Types",
+  "Loops (for, while)",
+  "Functions & Parameters",
+  "Arrays & Objects",
+  "Conditional Logic (if/else)",
+  "DOM Manipulation",
+  "APIs & Fetch Requests",
+  "Asynchronous JavaScript (Promises, async/await)",
+  "React Components",
+  "State Management",
+  "CSS & Styling",
+  "Debugging & Error Handling",
+] as const;
+
+export type DifficultyTopic = typeof DIFFICULTY_TOPICS[number];
 
 // Cohort-related interfaces
 export interface Cohort {
