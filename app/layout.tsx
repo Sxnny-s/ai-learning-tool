@@ -13,6 +13,11 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
+import { ThemeProvider } from "../context/ThemeProvider";
+
+// Vercel-friendly runtime hints for App Router
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,7 +37,8 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`font-sans ${inter.variable} antialiased`}>
+        <body className={`font-sans ${inter.variable} antialiased transition-colors duration-300 ease-in-out`}>
+          <ThemeProvider>
           <header className="flex justify-end items-center p-4 gap-4 h-16">
             <SignedOut>
                 <SignInButton mode="modal">
@@ -78,6 +84,7 @@ export default function RootLayout({
             <Toaster />
             <Analytics />
           </Suspense>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
