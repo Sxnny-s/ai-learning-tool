@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { Suspense, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { IconHome, IconUsers, IconBook, IconMessageCircle, IconChartBar, IconX, IconMenu, IconSchool, IconMessageChatbot } from "@tabler/icons-react"
+import ThemeToggle from "@/components/theme/ThemeToggle"
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: IconHome },
@@ -89,6 +90,10 @@ const AdminLayout: React.FC<Props> = (props) => {
               <h1 className="text-2xl font-bold text-gray-900">Resilient Coders Admin</h1>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Theme toggle for admin navbar */}
+              <Suspense fallback={null}>
+                <ThemeToggle />
+              </Suspense>
               <div className="text-sm text-gray-500">Welcome back, Admin</div>
             </div>
           </div>

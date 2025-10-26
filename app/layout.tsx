@@ -14,6 +14,7 @@ import { Inter } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
 import { ThemeProvider } from "../context/ThemeProvider";
+import ThemeToggle from "../components/theme/ThemeToggle";
 
 // Vercel-friendly runtime hints for App Router
 export const dynamic = "force-dynamic";
@@ -75,6 +76,10 @@ export default function RootLayout({
                 </div>
               </SignUpButton>
             </SignedOut>
+            {/* Theme toggle (left of avatar) */}
+            <Suspense fallback={null}>
+              <ThemeToggle />
+            </Suspense>
             <SignedIn>
               <UserButton />
             </SignedIn>
