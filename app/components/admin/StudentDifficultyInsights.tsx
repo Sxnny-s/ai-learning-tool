@@ -11,21 +11,11 @@ import {
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from "../ui/chart";
 import {
-  AlertCircle,
   CheckCircle2,
-  Clock,
   Eye,
   EyeOff,
   Loader2,
@@ -33,7 +23,6 @@ import {
 } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { DifficultyInsight } from "@/types/data";
-import { ScrollArea } from "../ui/scroll-area";
 
 interface Props {
   className?: string;
@@ -43,35 +32,33 @@ interface Props {
 
 interface ChartDataItem extends DifficultyInsight {
   fill: string;
-  [key: string]: any;
+  [key: string]: string | number | string[] | undefined;
 }
 
 const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-  "hsl(220, 70%, 50%)",
-  "hsl(280, 60%, 50%)",
-  "hsl(340, 75%, 50%)",
-  "hsl(30, 80%, 50%)",
-  "hsl(150, 60%, 40%)",
-  "hsl(200, 60%, 50%)",
-  "hsl(45, 90%, 50%)",
+  "hsl(0, 85%, 60%)",    // Red/Coral
+  "hsl(210, 85%, 55%)",  // Blue
+  "hsl(150, 70%, 45%)",  // Green
+  "hsl(280, 75%, 60%)",  // Purple
+  "hsl(35, 90%, 55%)",   // Orange
+  "hsl(190, 80%, 50%)",  // Cyan
+  "hsl(330, 85%, 60%)",  // Pink/Magenta
+  "hsl(60, 80%, 55%)",   // Yellow
+  "hsl(260, 70%, 60%)",  // Indigo
+  "hsl(20, 85%, 55%)",   // Burnt Orange
+  "hsl(170, 70%, 45%)",  // Teal
+  "hsl(300, 65%, 55%)",  // Violet
 ];
 
 export const StudentDifficultyInsights: React.FC<Props> = ({
   className = "",
   defaultCohortId,
-  cohorts = [],
 }) => {
   const [selectedCohortId, setSelectedCohortId] = useState<string>(
     defaultCohortId || ""
   );
   const [insights, setInsights] = useState<DifficultyInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showAddressed, setShowAddressed] = useState(false);
   const [addressedTopics, setAddressedTopics] = useState<string[]>([]);
@@ -83,22 +70,10 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
       console.log("Syncing selectedCohortId with defaultCohortId:", defaultCohortId);
       setSelectedCohortId(defaultCohortId);
     }
-  }, [defaultCohortId]);
+  }, [defaultCohortId, selectedCohortId]);
 
-  // Fetch insights when cohort changes
-  useEffect(() => {
-    if (!selectedCohortId) {
-      setIsLoading(false);
-      return;
-    }
-
-    fetchInsights();
-    fetchAddressedTopics();
-  }, [selectedCohortId]);
-
-  const fetchInsights = async () => {
+  const fetchInsights = React.useCallback(async () => {
     setIsLoading(true);
-    setError(null);
 
     console.log("Fetching insights for cohort:", selectedCohortId);
 
@@ -115,17 +90,15 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
       } else {
         const errorData = await response.json();
         console.error("Failed to fetch insights:", errorData);
-        setError(errorData.error || "Failed to load insights");
       }
     } catch (err) {
-      setError("An error occurred while fetching insights");
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedCohortId]);
 
-  const fetchAddressedTopics = async () => {
+  const fetchAddressedTopics = React.useCallback(async () => {
     try {
       const response = await fetch(
         `/api/admin/difficulty-insights/addressed?cohortId=${selectedCohortId}`
@@ -134,13 +107,24 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
       if (response.ok) {
         const data = await response.json();
         setAddressedTopics(
-          data.addressedTopics?.map((t: any) => t.topicName) || []
+          data.addressedTopics?.map((t: { topicName: string }) => t.topicName) || []
         );
       }
     } catch (err) {
       console.error("Error fetching addressed topics:", err);
     }
-  };
+  }, [selectedCohortId]);
+
+  // Fetch insights when cohort changes
+  useEffect(() => {
+    if (!selectedCohortId) {
+      setIsLoading(false);
+      return;
+    }
+
+    fetchInsights();
+    fetchAddressedTopics();
+  }, [selectedCohortId, fetchInsights, fetchAddressedTopics]);
 
   const handleMarkAsAddressed = async (topicName: string) => {
     if (
@@ -315,8 +299,8 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Pie Chart */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
+        <div className="flex flex-col gap-6">
+          <div className="w-full">
             <ChartContainer
               config={chartData.reduce(
                 (acc, item, index) => ({
@@ -337,8 +321,8 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={(props: any) =>
-                      `${props.topicName} (${props.percentage.toFixed(1)}%)`
+                    label={(entry) =>
+                      `${(entry as unknown as ChartDataItem).topicName} (${(entry as unknown as ChartDataItem).percentage.toFixed(1)}%)`
                     }
                     outerRadius={100}
                     fill="#8884d8"
@@ -390,7 +374,7 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
           </div>
 
           {/* Topic List with Actions */}
-          <div className="lg:w-80">
+          <div className="w-full">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-semibold">Topics ({displayedInsights.length})</h3>
               <Button
@@ -412,10 +396,10 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
                 )}
               </Button>
             </div>
-            <ScrollArea className="h-[280px] pr-4">
-              <div className="space-y-2">
-                {displayedInsights.map((insight) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {displayedInsights.map((insight, index) => {
                   const isAddressed = addressedTopics.includes(insight.topicName);
+                  const color = CHART_COLORS[index % CHART_COLORS.length];
                   return (
                     <div
                       key={insight.topicName}
@@ -426,6 +410,10 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: color }}
+                            />
                             <p className="text-sm font-medium truncate">
                               {insight.topicName}
                             </p>
@@ -433,7 +421,7 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
                               <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground mt-1 ml-5">
                             {insight.count} student{insight.count !== 1 ? "s" : ""} •{" "}
                             {insight.percentage.toFixed(1)}%
                           </p>
@@ -461,8 +449,7 @@ export const StudentDifficultyInsights: React.FC<Props> = ({
                     </div>
                   );
                 })}
-              </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
 

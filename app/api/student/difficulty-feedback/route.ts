@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from "@/src/lib/supabase/server";
  * GET /api/student/difficulty-feedback
  * Retrieve the current student's difficulty feedback
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await requireAuth();
     const supabase = await createServerSupabaseClient();
@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
       .from("profiles")
       .select("cohort, user_id")
       .eq("clerk_user_id", user.id)
-      .single();
+      .single<{ cohort: string | null; user_id: string }>();
 
-    if (profileError || !profile || !(profile as any).cohort) {
+    if (profileError || !profile || !profile.cohort) {
       return NextResponse.json(
         { error: "User cohort not found" },
         { status: 404 }
@@ -29,9 +29,18 @@ export async function GET(request: NextRequest) {
     const { data: feedback, error: feedbackError } = await supabase
       .from("student_difficulty_feedback")
       .select("*")
-      .eq("user_id", (profile as any).user_id)
-      .eq("cohort_id", (profile as any).cohort)
-      .maybeSingle();
+      .eq("user_id", profile.user_id)
+      .eq("cohort_id", profile.cohort)
+      .maybeSingle<{
+        id: string;
+        user_id: string;
+        cohort_id: string;
+        selected_topics: string[];
+        custom_other: string | null;
+        topic_ratings: Record<string, string>;
+        created_at: string;
+        updated_at: string;
+      }>();
 
     if (feedbackError) {
       console.error("Error fetching feedback:", feedbackError);
@@ -44,13 +53,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       feedback: feedback
         ? {
-            id: (feedback as any).id,
-            userId: (feedback as any).user_id,
-            cohortId: (feedback as any).cohort_id,
-            selectedTopics: (feedback as any).selected_topics || [],
-            customOther: (feedback as any).custom_other,
-            createdAt: (feedback as any).created_at,
-            updatedAt: (feedback as any).updated_at,
+            id: feedback.id,
+            userId: feedback.user_id,
+            cohortId: feedback.cohort_id,
+            selectedTopics: feedback.selected_topics || [],
+            customOther: feedback.custom_other,
+            topicRatings: feedback.topic_ratings || {},
+            createdAt: feedback.created_at,
+            updatedAt: feedback.updated_at,
           }
         : null,
     });
@@ -83,7 +93,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { selectedTopics, customOther } = body;
+    const { selectedTopics, customOther, topicRatings } = body;
 
     // Validation
     if (
@@ -110,7 +120,7 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .select("cohort, user_id")
       .eq("clerk_user_id", user.id)
-      .single();
+      .single<{ cohort: string | null; user_id: string }>();
 
     if (profileError) {
       console.error("Profile fetch error:", profileError);
@@ -127,7 +137,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cohortValue = (profile as any).cohort;
+    const cohortValue = profile.cohort;
     console.log("User cohort value:", cohortValue, "User ID:", user.id);
 
     if (!cohortValue) {
@@ -138,16 +148,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert feedback (insert or update if exists)
-    const { data: feedback, error: upsertError } = await supabase
-      .from("student_difficulty_feedback")
+    const { data: feedback, error: upsertError } = await (supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from("student_difficulty_feedback") as any)
       .upsert(
         {
-          user_id: (profile as any).user_id,
+          user_id: profile.user_id,
           cohort_id: cohortValue,
           selected_topics: selectedTopics || [],
           custom_other: customOther?.trim() || null,
+          topic_ratings: topicRatings || {},
           updated_at: new Date().toISOString(),
-        } as any,
+        },
         {
           onConflict: "user_id,cohort_id",
         }
@@ -166,13 +178,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       feedback: {
-        id: (feedback as any).id,
-        userId: (feedback as any).user_id,
-        cohortId: (feedback as any).cohort_id,
-        selectedTopics: (feedback as any).selected_topics || [],
-        customOther: (feedback as any).custom_other,
-        createdAt: (feedback as any).created_at,
-        updatedAt: (feedback as any).updated_at,
+        id: feedback.id,
+        userId: feedback.user_id,
+        cohortId: feedback.cohort_id,
+        selectedTopics: feedback.selected_topics || [],
+        customOther: feedback.custom_other,
+        topicRatings: feedback.topic_ratings || {},
+        createdAt: feedback.created_at,
+        updatedAt: feedback.updated_at,
       },
     });
   } catch (error) {
@@ -188,7 +201,7 @@ export async function POST(request: NextRequest) {
  * DELETE /api/student/difficulty-feedback
  * Delete student's difficulty feedback
  */
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   try {
     const user = await requireAuth();
     const supabase = await createServerSupabaseClient();
@@ -198,9 +211,9 @@ export async function DELETE(request: NextRequest) {
       .from("profiles")
       .select("cohort, user_id")
       .eq("clerk_user_id", user.id)
-      .single();
+      .single<{ cohort: string | null; user_id: string }>();
 
-    if (profileError || !profile || !(profile as any).cohort) {
+    if (profileError || !profile || !profile.cohort) {
       return NextResponse.json(
         { error: "User cohort not found" },
         { status: 404 }
@@ -211,8 +224,8 @@ export async function DELETE(request: NextRequest) {
     const { error: deleteError } = await supabase
       .from("student_difficulty_feedback")
       .delete()
-      .eq("user_id", (profile as any).user_id)
-      .eq("cohort_id", (profile as any).cohort);
+      .eq("user_id", profile.user_id)
+      .eq("cohort_id", profile.cohort);
 
     if (deleteError) {
       console.error("Error deleting feedback:", deleteError);

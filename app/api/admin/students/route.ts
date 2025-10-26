@@ -76,7 +76,7 @@ export async function GET() {
       .from('profiles')
       .select('*')
       .eq('role', 'student')
-      .order('created_at', { ascending: false }) as { data: Profile[] | null; error: any };
+      .order('created_at', { ascending: false }) as { data: Profile[] | null; error: Error | null };
 
     if (profilesError) {
       console.error('[GET /api/admin/students] Error fetching students:', profilesError);

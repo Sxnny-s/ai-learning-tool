@@ -370,6 +370,20 @@ export interface HotTopic {
   trend: 'up' | 'down' | 'stable';
   difficulty: 'High' | 'Medium' | 'Low';
   lastActivity: string;
+  studentReportedDifficulty?: 'High' | 'Medium' | 'Low' | null;
+  difficultyRatings?: {
+    High: number;
+    Medium: number;
+    Low: number;
+  };
+  studentsRequesting?: Array<{
+    userId: string;
+    clerkUserId: string | null;
+    name: string;
+    email: string;
+    submittedAt: string;
+    difficultyRating: 'High' | 'Medium' | 'Low' | null;
+  }>;
 }
 
 export interface StudentProgress {
@@ -397,6 +411,7 @@ export interface DifficultyFeedback {
   cohortId: string;
   selectedTopics: string[];
   customOther?: string;
+  topicRatings?: Record<string, DifficultyRating>;
   createdAt: string;
   updatedAt: string;
 }
@@ -418,9 +433,12 @@ export interface AddressedTopic {
   notes?: string;
 }
 
+export type DifficultyRating = "Low" | "Medium" | "High";
+
 export interface DifficultyFeedbackSubmission {
   selectedTopics: string[];
   customOther?: string;
+  topicRatings?: Record<string, DifficultyRating>;
 }
 
 export interface MarkTopicAddressedRequest {

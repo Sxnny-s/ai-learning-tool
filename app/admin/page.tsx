@@ -9,7 +9,7 @@ import { CohortOverview } from "../components/instructor/CohortOverview"
 import { TopicDifficultyAnalysis } from "../components/instructor/TopicDifficultyAnalysis"
 import { StudentDifficultyInsights } from "../components/admin/StudentDifficultyInsights"
 import { HotTopics } from "../components/instructor/HotTopics"
-import { IconUsers, IconBook, IconMessageCircle, IconTrendingUp, IconPlus, IconEye, IconEdit, IconTrash, IconChevronDown } from "@tabler/icons-react"
+import { IconUsers, IconMessageCircle, IconTrendingUp, IconPlus } from "@tabler/icons-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,69 +30,105 @@ interface DashboardData {
   totalSessions: number;
   completionRate: number;
   totalConversations: number;
-  strugglingStudents: Array<any>;
-  topicDifficulties: Array<any>;
-  hotTopics: Array<any>;
-  recentStudents: Array<any>;
+  strugglingStudents: Array<{
+    id: string;
+    name: string;
+    email: string;
+    lastActive: string;
+    progress: number;
+    strugglingTopics: string[];
+    riskLevel: 'High' | 'Medium' | 'Low';
+    daysSinceLastSession: number;
+  }>;
+  topicDifficulties: Array<{
+    name: string;
+    difficulty: 'High' | 'Medium' | 'Low';
+    studentsStruggling: number;
+    averageTime: string;
+    completionRate: number;
+  }>;
+  hotTopics: Array<{
+    name: string;
+    discussionCount: number;
+    studentCount: number;
+    trend: 'up' | 'down' | 'stable';
+    difficulty: 'High' | 'Medium' | 'Low';
+    lastActivity: string;
+    strugglingCount?: number;
+    isAddressed?: boolean;
+    addressedAt?: string;
+    studentReportedDifficulty?: 'High' | 'Medium' | 'Low' | null;
+    difficultyRatings?: {
+      High: number;
+      Medium: number;
+      Low: number;
+    };
+    studentsRequesting?: Array<{
+      userId: string;
+      clerkUserId: string | null;
+      name: string;
+      email: string;
+      submittedAt: string;
+      difficultyRating: 'High' | 'Medium' | 'Low' | null;
+    }>;
+  }>;
+  recentStudents: Array<{
+    name: string;
+    email: string;
+    joined: string;
+    status: string;
+  }>;
 }
 
 const AdminDashboard: React.FC<Props> = () => {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [cohorts, setCohorts] = useState<Array<{ id: string; name: string }>>([])
   const [selectedCohortId, setSelectedCohortId] = useState<string>("")
 
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        console.log('Admin page: Fetching dashboard data...')
-        const response = await fetch('/api/admin/dashboard-stats')
+        setLoading(true)
+        console.log('Admin page: Fetching dashboard data for cohort:', selectedCohortId || 'all')
+        
+        // Build URL with optional cohort filter
+        const url = selectedCohortId 
+          ? `/api/admin/dashboard-stats?cohortId=${encodeURIComponent(selectedCohortId)}`
+          : '/api/admin/dashboard-stats'
+        
+        const response = await fetch(url)
         console.log('Admin page: Response status:', response.status)
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           console.error('Admin page: API error:', errorData)
-          // Don't throw error - just log it and set default data
-          console.warn('Dashboard stats unavailable, using default data')
-          setData({
-            totalStudents: 0,
-            activeStudents: 0,
-            averageTimeSpent: '0 hours',
-            totalSessions: 0,
-            completionRate: 0,
-            totalConversations: 0,
-            strugglingStudents: [],
-            topicDifficulties: [],
-            hotTopics: [],
-            recentStudents: []
-          })
-        } else {
-          const result = await response.json()
-          console.log('Admin page: Dashboard data received:', result)
-          setData(result)
+          
+          // Handle authorization errors specifically
+          if (response.status === 403) {
+            throw new Error('Access Denied: Admin access required. Please contact your administrator.')
+          } else if (response.status === 401) {
+            throw new Error('Authentication required. Please sign in again.')
+          } else {
+            throw new Error(errorData.error || `Failed to load dashboard (${response.status})`)
+          }
         }
+        
+        const result = await response.json()
+        console.log('Admin page: Dashboard data received:', result)
+        setData(result)
+        setError(null)
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
-        // Don't block the page - use default data
-        setData({
-          totalStudents: 0,
-          activeStudents: 0,
-          averageTimeSpent: '0 hours',
-          totalSessions: 0,
-          completionRate: 0,
-          totalConversations: 0,
-          strugglingStudents: [],
-          topicDifficulties: [],
-          hotTopics: [],
-          recentStudents: []
-        })
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard. Please try again.')
       } finally {
         setLoading(false)
       }
     }
 
     fetchDashboardData()
-  }, [])
+  }, [selectedCohortId])
 
   // Fetch cohorts for the difficulty insights component
   useEffect(() => {
@@ -110,7 +146,7 @@ const AdminDashboard: React.FC<Props> = () => {
           const cohortsData = result.data ||  []
           
           if (cohortsData && cohortsData.length > 0) {
-            const mappedCohorts = cohortsData.map((c: any) => ({ id: c.name, name: c.name }))
+            const mappedCohorts = cohortsData.map((c: { name: string }) => ({ id: c.name, name: c.name }))
             console.log('Admin page: Mapped cohorts:', mappedCohorts)
             setCohorts(mappedCohorts)
             
@@ -144,6 +180,40 @@ const AdminDashboard: React.FC<Props> = () => {
     )
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center max-w-2xl mx-auto mt-12">
+          <div className="mb-4">
+            <svg className="w-16 h-16 mx-auto text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-red-900 mb-2">Access Denied</h2>
+          <p className="text-red-700 font-medium mb-4">{error}</p>
+          <p className="text-red-600 text-sm mb-6">
+            This page is restricted to administrators only. If you believe you should have access, please contact your system administrator.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Retry
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/'} 
+              variant="outline"
+              className="border-red-300 text-red-700 hover:bg-red-50"
+            >
+              Go to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!data) {
     return null
   }
@@ -156,11 +226,11 @@ const AdminDashboard: React.FC<Props> = () => {
           <h2 className="text-3xl font-bold text-gray-900">Dashboard Overview</h2>
           <p className="text-gray-600 mt-1">
             Monitor your AI learning platform performance
-            {selectedCohortId && (
-              <span className="ml-2 text-red-600 font-semibold">
-                • Viewing: {cohorts.find(c => c.id === selectedCohortId)?.name || selectedCohortId}
-              </span>
-            )}
+            <span className="ml-2 text-red-600 font-semibold">
+              • {selectedCohortId 
+                  ? `Viewing: ${cohorts.find(c => c.id === selectedCohortId)?.name || selectedCohortId}`
+                  : 'Viewing: All Cohorts'}
+            </span>
           </p>
         </div>
         
@@ -174,25 +244,34 @@ const AdminDashboard: React.FC<Props> = () => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Select Cohort</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                console.log('All cohorts selected');
+                setSelectedCohortId('');
+              }}
+              className={!selectedCohortId ? "bg-red-50 text-red-600 font-semibold" : ""}
+            >
+              {!selectedCohortId && "✓ "}
+              All Cohorts
+            </DropdownMenuItem>
             {cohorts.length > 0 ? (
-              cohorts.slice(0, 5).map((cohort) => (
-                <DropdownMenuItem
-                  key={cohort.id}
-                  onClick={() => {
-                    console.log('Cohort selected:', cohort.id);
-                    setSelectedCohortId(cohort.id);
-                  }}
-                  className={selectedCohortId === cohort.id ? "bg-red-50 text-red-600 font-semibold" : ""}
-                >
-                  {selectedCohortId === cohort.id && "✓ "}
-                  {cohort.name}
-                </DropdownMenuItem>
-              ))
-            ) : (
-              <DropdownMenuItem disabled>
-                No cohorts available
-              </DropdownMenuItem>
-            )}
+              <>
+                <DropdownMenuSeparator />
+                {cohorts.slice(0, 5).map((cohort) => (
+                  <DropdownMenuItem
+                    key={cohort.id}
+                    onClick={() => {
+                      console.log('Cohort selected:', cohort.id);
+                      setSelectedCohortId(cohort.id);
+                    }}
+                    className={selectedCohortId === cohort.id ? "bg-red-50 text-red-600 font-semibold" : ""}
+                  >
+                    {selectedCohortId === cohort.id && "✓ "}
+                    {cohort.name}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs text-gray-500">
               Other Actions
@@ -290,19 +369,42 @@ const AdminDashboard: React.FC<Props> = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top Topics</CardTitle>
-            <CardDescription>Most discussed learning topics</CardDescription>
+            <CardTitle>Most Requested Help Topics</CardTitle>
+            <CardDescription>Topics students are requesting help with via difficulty feedback</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {data.hotTopics.slice(0, 3).length > 0 ? (
                 data.hotTopics.slice(0, 3).map((topic, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className={`flex items-start justify-between p-3 rounded-lg border-2 ${
+                    topic.isAddressed 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-red-50 border-red-200'
+                  }`}>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{topic.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {topic.studentCount} students • {topic.discussionCount} discussions
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{topic.name}</p>
+                        {topic.isAddressed && (
+                          <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                            ✓ Addressed
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        <span className="text-red-600 font-semibold">
+                          {topic.strugglingCount} {topic.strugglingCount === 1 ? 'student' : 'students'} requesting help
+                        </span>
                       </p>
+                      {topic.isAddressed && topic.addressedAt && (
+                        <p className="text-xs text-green-700 mt-1">
+                          Addressed {new Date(topic.addressedAt).toLocaleDateString()}
+                        </p>
+                      )}
+                      {!topic.isAddressed && (
+                        <p className="text-xs text-red-600 mt-1 font-medium">
+                          ⚠️ Needs attention
+                        </p>
+                      )}
                     </div>
                     <Badge variant={topic.difficulty === "High" ? "secondary" : topic.difficulty === "Medium" ? "secondary" : "default"}>
                       {topic.difficulty}
@@ -310,7 +412,10 @@ const AdminDashboard: React.FC<Props> = () => {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">No topic data available</p>
+                <div className="text-center py-8">
+                  <p className="text-gray-500 text-sm">No student difficulty feedback yet</p>
+                  <p className="text-gray-400 text-xs mt-1">Students can submit feedback via the difficulty form</p>
+                </div>
               )}
             </div>
           </CardContent>

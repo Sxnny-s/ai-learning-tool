@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("clerk_user_id", user.id)
-      .single();
+      .single<{ role: string }>();
 
-    if ((profile as any)?.role !== "admin") {
+    if (profile?.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
         { status: 403 }
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform to match interface
-    const topics = (addressedTopics || []).map((topic: any) => ({
+    const topics = (addressedTopics || []).map((topic: { id: string; cohort_id: string; topic_name: string; addressed_by: string; addressed_at: string; is_active: boolean; notes: string | null }) => ({
       id: topic.id,
       cohortId: topic.cohort_id,
       topicName: topic.topic_name,

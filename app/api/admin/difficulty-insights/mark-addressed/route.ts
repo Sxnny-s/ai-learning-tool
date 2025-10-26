@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .select("role, user_id")
       .eq("clerk_user_id", user.id)
-      .single();
+      .single<{ role: string; user_id: string }>();
 
-    if ((profile as any)?.role !== "admin") {
+    if (profile?.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
         { status: 403 }
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     if (unmark) {
       // Unmark the topic (set is_active to false)
       const { error: updateError } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("addressed_topics") as any)
         .update({ is_active: false })
         .eq("cohort_id", cohortId)
@@ -68,17 +69,18 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Mark the topic as addressed (upsert with is_active = true)
-      const { error: upsertError } = await supabase
-        .from("addressed_topics")
+      const { error: upsertError } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("addressed_topics") as any)
         .upsert(
           {
             cohort_id: cohortId,
             topic_name: topicName,
-            addressed_by: (profile as any).user_id,
+            addressed_by: profile.user_id,
             addressed_at: new Date().toISOString(),
             is_active: true,
             notes: notes || null,
-          } as any,
+          },
           {
             onConflict: "cohort_id,topic_name",
           }

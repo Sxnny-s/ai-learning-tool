@@ -13,21 +13,27 @@ import { Checkbox } from "../ui/checkbox";
 import { Textarea } from "../ui/textarea";
 import { Label } from "../ui/label";
 import { AlertCircle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
-import { DIFFICULTY_TOPICS, DifficultyFeedback } from "@/types/data";
+import { DIFFICULTY_TOPICS, DifficultyFeedback, DifficultyRating } from "@/types/data";
 import { useUser } from "@clerk/nextjs";
 import { Alert, AlertDescription } from "../ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface Props {
-  cohortId?: string;
   className?: string;
 }
 
 export const DifficultyFeedbackCard: React.FC<Props> = ({
-  cohortId,
   className = "",
 }) => {
   const { user } = useUser();
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [topicRatings, setTopicRatings] = useState<Record<string, DifficultyRating>>({});
   const [includeOther, setIncludeOther] = useState(false);
   const [customOther, setCustomOther] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +59,7 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
           if (data.feedback) {
             setExistingFeedback(data.feedback);
             setSelectedTopics(data.feedback.selectedTopics || []);
+            setTopicRatings(data.feedback.topicRatings || {});
             if (data.feedback.customOther) {
               setIncludeOther(true);
               setCustomOther(data.feedback.customOther);
@@ -70,11 +77,29 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
   }, [user]);
 
   const handleTopicToggle = (topic: string) => {
-    setSelectedTopics((prev) =>
-      prev.includes(topic)
+    setSelectedTopics((prev) => {
+      const newTopics = prev.includes(topic)
         ? prev.filter((t) => t !== topic)
-        : [...prev, topic]
-    );
+        : [...prev, topic];
+      
+      // Remove rating if topic is deselected
+      if (!newTopics.includes(topic)) {
+        setTopicRatings((prevRatings) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { [topic]: _removed, ...rest } = prevRatings;
+          return rest;
+        });
+      }
+      
+      return newTopics;
+    });
+  };
+
+  const handleRatingChange = (topic: string, rating: DifficultyRating) => {
+    setTopicRatings((prev) => ({
+      ...prev,
+      [topic]: rating,
+    }));
   };
 
   const handleOtherToggle = () => {
@@ -114,6 +139,7 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
         body: JSON.stringify({
           selectedTopics,
           customOther: customOther.trim() || undefined,
+          topicRatings,
         }),
       });
 
@@ -136,7 +162,7 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
           text: errorData.error || "Failed to submit feedback. Please try again.",
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: "error",
         text: "An error occurred. Please try again later.",
@@ -178,7 +204,7 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
           text: errorData.error || "Failed to remove feedback. Please try again.",
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: "error",
         text: "An error occurred. Please try again later.",
@@ -212,7 +238,7 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
               Learning Difficulties
             </CardTitle>
             <CardDescription>
-              Let us know which topics you're struggling with so we can provide
+              Let us know which topics you&apos;re struggling with so we can provide
               better support
             </CardDescription>
           </div>
@@ -235,23 +261,42 @@ export const DifficultyFeedbackCard: React.FC<Props> = ({
           {/* Predefined Topics */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">
-              Topics I'm Having Trouble With:
+              Topics I&apos;m Having Trouble With:
             </Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-3">
               {DIFFICULTY_TOPICS.map((topic) => (
-                <div key={topic} className="flex items-start space-x-2">
-                  <Checkbox
-                    id={`topic-${topic}`}
-                    checked={selectedTopics.includes(topic)}
-                    onCheckedChange={() => handleTopicToggle(topic)}
-                    disabled={isLoading}
-                  />
-                  <label
-                    htmlFor={`topic-${topic}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    {topic}
-                  </label>
+                <div key={topic} className="flex items-start justify-between gap-4 p-3 border rounded-lg bg-gray-50">
+                  <div className="flex items-start space-x-2 flex-1">
+                    <Checkbox
+                      id={`topic-${topic}`}
+                      checked={selectedTopics.includes(topic)}
+                      onCheckedChange={() => handleTopicToggle(topic)}
+                      disabled={isLoading}
+                      className="mt-0.5"
+                    />
+                    <label
+                      htmlFor={`topic-${topic}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {topic}
+                    </label>
+                  </div>
+                  {selectedTopics.includes(topic) && (
+                    <Select
+                      value={topicRatings[topic] || ""}
+                      onValueChange={(value) => handleRatingChange(topic, value as DifficultyRating)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="How difficult?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low 🟢</SelectItem>
+                        <SelectItem value="Medium">Medium 🟡</SelectItem>
+                        <SelectItem value="High">High 🔴</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               ))}
             </div>

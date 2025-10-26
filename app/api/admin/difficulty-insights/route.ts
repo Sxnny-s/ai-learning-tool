@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("clerk_user_id", user.id)
-      .single();
+      .single<{ role: string }>();
 
-    if ((profile as any)?.role !== "admin") {
+    if (profile?.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
         { status: 403 }
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       .eq("is_active", true);
 
     const addressedTopicNames = new Set(
-      addressedTopics?.map((t: any) => t.topic_name) || []
+      addressedTopics?.map((t: { topic_name: string }) => t.topic_name) || []
     );
 
     // Aggregate the data
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     const customResponses: string[] = [];
     let mostRecentUpdate: string | null = null;
 
-    feedbacks.forEach((feedback: any) => {
+    feedbacks.forEach((feedback: { updated_at: string; selected_topics?: string[]; custom_other?: string | null }) => {
       // Track most recent update
       if (
         !mostRecentUpdate ||

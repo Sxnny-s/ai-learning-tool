@@ -32,7 +32,7 @@ function formatTimeSpent(seconds: number): string {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { cohortName: string } }
+  { params }: { params: Promise<{ cohortName: string }> }
 ) {
   try {
     const user = await requireAuth();
@@ -44,7 +44,7 @@ export async function GET(
       );
     }
 
-    const cohortName = params.cohortName;
+    const { cohortName } = await params;
 
     if (!cohortName) {
       return NextResponse.json(
@@ -62,7 +62,7 @@ export async function GET(
       .from('profiles')
       .select('*')
       .eq('role', 'student')
-      .eq('cohort', cohortName) as { data: Profile[] | null; error: any };
+      .eq('cohort', cohortName) as { data: Profile[] | null; error: Error | null };
 
     if (profilesError) {
       console.error('Error fetching cohort profiles:', profilesError);
@@ -125,7 +125,7 @@ export async function GET(
     });
 
     const hotTopics = Array.from(topicFrequency.entries())
-      .map(([name, count]) => name)
+      .map(([name]) => name)
       .sort((a, b) => (topicFrequency.get(b) || 0) - (topicFrequency.get(a) || 0))
       .slice(0, 5);
 
