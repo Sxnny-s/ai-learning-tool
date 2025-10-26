@@ -1,5 +1,5 @@
 import React from "react";
-import { Input } from "../../../components/ui/InputComponent";
+import { Input } from "../../../app/components/ui/InputComponent";
 
 describe("Input Component", () => {
   // 1. Fundamental Structure

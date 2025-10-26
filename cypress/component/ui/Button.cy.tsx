@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "../../../components/ui/ButtonComponent";
+import { Button } from "../../../app/components/ui/ButtonComponent";
 
 describe("Button Component", () => {
   // Test component structure (semantic correctness)

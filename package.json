@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.38",
+    "@clerk/backend": "^2.17.2",
     "@clerk/nextjs": "^6.32.2",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -52,6 +53,7 @@
     "@tabler/icons-react": "^3.35.0",
     "@tailwindcss/postcss": "^4",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/uuid": "^10.0.0",
     "@vercel/analytics": "^1.5.0",
     "ai": "^5.0.56",
     "autoprefixer": "^10.4.20",
@@ -73,6 +75,7 @@
     "react-day-picker": "^9.11.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",
+    "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.6",
     "recharts": "^3.2.1",
     "sonner": "^2.0.7",
@@ -80,6 +83,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^13.0.0",
     "vaul": "^1.1.2",
     "zod": "^4.1.11"
   },

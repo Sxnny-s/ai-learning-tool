@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 
 import { getAllUsers } from "@/lib/database/user";
@@ -7,7 +7,7 @@ import { getAllUsers } from "@/lib/database/user";
  * GET /api/users
  * Get all users' profiles (admin only) 
  */ 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const user = await requireAuth();
       

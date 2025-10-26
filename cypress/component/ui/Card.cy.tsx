@@ -5,7 +5,7 @@ import {
   CardContent,
   CardTitle,
   CardDescription,
-} from "../../../components/ui/CardComponent";
+} from "../../../app/components/ui/CardComponent";
 
 describe("Card Component System", () => {
   // 1. Fundamental Structure - Test each component individually first

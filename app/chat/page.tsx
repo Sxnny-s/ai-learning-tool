@@ -1,4 +1,4 @@
-import Chat from './chat-component';
+import { ChatBotFunctional } from './OpenAIChatBot'
 
 export default function ChatPage() {
   return (
@@ -20,7 +20,7 @@ export default function ChatPage() {
         </div>
       </header>
       <main className="h-[calc(100vh-120px)]">
-        <Chat />
+        <ChatBotFunctional />
       </main>
     </div>
   );

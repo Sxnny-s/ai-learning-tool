@@ -1,5 +1,5 @@
 import React from "react";
-import { LessonCard } from "../../../components/admin/LessonCard";
+import { LessonCard } from "../../../app/components/admin/LessonCard";
 import { Lesson } from "../../../types/data";
 
 describe("LessonCard Component", () => {

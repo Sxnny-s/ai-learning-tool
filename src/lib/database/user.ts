@@ -1,6 +1,14 @@
 /**
  * Database integration utilities for user management
  * This file contains functions to sync Clerk users with Supabase profiles table
+ *
+ * DB helpers for profiles.
+ * Ownership:
+ * - Name & email: Clerk-first (webhook mirrors to DB).
+ * - Cohort: DB-first today; writable via API/DB helpers.
+ * 
+ * TODO(future): If cohort flips to Clerk-first, block direct DB writes outside webhook
+ * and route mutations via Clerk public_metadata + webhook mirror.
  */
 
 import { supabaseAdmin } from '../supabase';

@@ -62,7 +62,7 @@ export async function GET() {
           last_active_at: student.last_session_ended_at || 'Never'
         };
       });
-
+//wdw
     return NextResponse.json({ data: res }, { status: 200 });
 
   } catch (error) {

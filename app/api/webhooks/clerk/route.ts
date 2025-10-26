@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+/**
+ * Clerk webhook → DB mirror
+ * - Name/email: Clerk-first. We mirror to DB here.
+ * - Cohort: currently **DB-first**. We intentionally do NOT read/write cohort from Clerk now.
+ * 
+ * TODO(future): If cohort becomes Clerk-first, read evt.data.public_metadata?.cohort
+ * and idempotently write to profiles.cohort here.
+ */
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { createUser, updateUser, deleteUser, getUserByClerkId, updateLastActive } from "@/lib/database/user";
@@ -303,6 +311,8 @@ async function handleUserUpdated(userData: UserWebhookData) {
     return;
   }
 
+  // Note: cohort is NOT mirrored from Clerk today.
+  // TODO(future): mirror public_metadata.cohort → profiles.cohort if team flips cohort to Clerk-first. Right now its only DB
   const updatedUser = await updateUser(id, updateData);
 
   if (!updatedUser) {
