@@ -3,7 +3,10 @@ import "server-only";
 // Edge runtime hint for modules imported by edge routes/actions
 export const runtime = "edge";
 
-import { clerkClient } from "@clerk/nextjs/server";
+import { createClerkClient } from "@clerk/backend";
+
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+const clerk = clerkSecretKey ? createClerkClient({ secretKey: clerkSecretKey }) : null;
 
 export type ThemePreference = "light" | "dark" | "system";
 
@@ -21,15 +24,18 @@ export async function updateUserTheme(
       return { ok: false, error: "invalid_theme" };
     }
 
-    await clerkClient.users.updateUser(userId, {
+    if (!clerk) {
+      console.error("CLERK_SECRET_KEY is not configured.");
+      return { ok: false, error: "persist_failed" };
+    }
+
+    await clerk.users.updateUser(userId, {
       publicMetadata: { themePreference: value as ThemePreference },
     });
 
     return { ok: true };
   } catch (error) {
-    // Non-throwing contract for callers (e.g., fire-and-forget)
+    console.error("updateUserTheme failed:", error);
     return { ok: false, error: "persist_failed" };
   }
 }
-
-

@@ -13,8 +13,8 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
-import { ThemeProvider } from "../context/ThemeProvider";
-import ThemeToggle from "../components/theme/ThemeToggle";
+import { ThemeProvider } from "./components/theme-provider";
+import ThemeToggle from "./components/ThemeToggle";
 
 // Vercel-friendly runtime hints for App Router
 export const dynamic = "force-dynamic";

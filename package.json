@@ -58,6 +58,7 @@
     "ai": "^5.0.56",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
+    "clerk": "^0.8.3",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
