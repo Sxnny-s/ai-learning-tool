@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
 /**
  * Validate and normalize role from webhook data
  */
-function validateAndNormalizeRole(role: string | undefined): "student" | "admin" {
+function validateAndNormalizeRole(role: unknown): "student" | "admin" {
   if (!role || typeof role !== "string") {
     return "student";
   }
