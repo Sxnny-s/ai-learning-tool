@@ -1,6 +1,6 @@
 "use client";
 
-// TODO: Mount ThemeDropdownControl inside the official Settings page once merged.
+// TODO: Mount ThemeDropdownControl inside the official Settings page when merged.
 // The Navbar ThemeToggle remains the permanent quick-access control.
 
 import type { ComponentType } from "react";

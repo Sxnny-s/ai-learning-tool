@@ -4,7 +4,7 @@ import React, { Suspense, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { IconHome, IconUsers, IconBook, IconMessageCircle, IconChartBar, IconX, IconMenu, IconSchool, IconMessageChatbot } from "@tabler/icons-react"
-import ThemeToggle from "@/components/theme/ThemeToggle"
+import ThemeToggle from "../components/ThemeToggle"
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: IconHome },
