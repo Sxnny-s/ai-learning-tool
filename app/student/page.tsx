@@ -1,5 +1,6 @@
 "use client";
 
+import HuggingFace from "../components/HuggingFace";
 import { Badge } from "../components/ui/badge";
 import { Calendar } from "../components/ui/calendar";
 import {
@@ -105,7 +106,7 @@ const StudentDashboard = () => {
       <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="students">Lessons</TabsTrigger>
+          <TabsTrigger value="students">Practice</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="analytics">Stats</TabsTrigger>
         </TabsList>
@@ -191,42 +192,9 @@ const StudentDashboard = () => {
          `TableRow`/`TableCell` elements. `TableCaption` is optional
          for describing the table. Good for tabular data and actions.
         */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Featured Courses</CardTitle>
-              <CardDescription>
-                Jump right into your favourite courses
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">
-                  Recents
-                </Label>
-                <Carousel className="w-full max-w-xs mx-auto">
-                  <CarouselContent>
-                    {pieData.map((course) => (
-                      <CarouselItem key={course.name}>
-                        <Card>
-                          <CardContent className="flex aspect-square items-center justify-center p-6">
-                            <div className="text-center">
-                              <BookOpen className="h-12 w-12 mx-auto mb-2" />
-                              <h3 className="font-semibold">{course.name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {course.description}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
-              </div>
-            </CardContent>
-          </Card>
+          
+         <HuggingFace/>
+         
         </TabsContent>
 
         <TabsContent value="chat" className="space-y-6">
