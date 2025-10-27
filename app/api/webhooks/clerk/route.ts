@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+export const runtime = "edge"; // Run on Vercel Edge
+export const preferredRegion = "iad1"; // Hint region close to Clerk US
 /**
  * Clerk webhook → DB mirror
  * - Name/email: Clerk-first. We mirror to DB here.
@@ -10,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { createUser, updateUser, deleteUser, getUserByClerkId, updateLastActive } from "@/lib/database/user";
+import { createClient } from "@supabase/supabase-js";
 
 // Type definitions for Clerk webhook events
 interface ClerkWebhookEvent {
@@ -19,9 +22,7 @@ interface ClerkWebhookEvent {
     email_addresses?: Array<{ email_address: string }>;
     first_name?: string;
     last_name?: string;
-    public_metadata?: {
-      role?: string;
-    };
+    public_metadata?: Record<string, unknown>; // include themePreference, role, etc.
   };
 }
 
@@ -165,6 +166,8 @@ export async function POST(request: NextRequest) {
           lastName: last_name,
           role,
         });
+      // Mirror theme preference to Supabase if provided (non-blocking)
+      mirrorThemePreferenceToSupabase(id, (evt.data as { public_metadata?: Record<string, unknown> })?.public_metadata?.themePreference).catch(() => {});
         break;
 
       case "user.deleted":
@@ -196,7 +199,7 @@ export async function POST(request: NextRequest) {
 /**
  * Validate and normalize role from webhook data
  */
-function validateAndNormalizeRole(role: string | undefined): "student" | "admin" {
+function validateAndNormalizeRole(role: unknown): "student" | "admin" {
   if (!role || typeof role !== "string") {
     return "student";
   }
@@ -331,6 +334,34 @@ async function handleUserDeleted(userId: string) {
   await deleteUser(userId);
 
   console.log("User deleted successfully:", { userId });
+}
+
+/**
+ * Mirror Clerk public_metadata.themePreference to Supabase profiles.
+ */
+async function mirrorThemePreferenceToSupabase(
+  clerkUserId: string,
+  theme: unknown
+) {
+  try {
+    const value = typeof theme === "string" ? theme.toLowerCase() : "";
+    if (value !== "light" && value !== "dark" && value !== "system") return;
+
+    // Create a one-off admin client (edge-safe)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Update profiles table (DB is DB-first for cohorts, but theme is Clerk-first)
+    await supabase
+      .from('profiles')
+      .update({ theme_preference: value, updated_at: new Date().toISOString() })
+      .eq('clerk_user_id', clerkUserId);
+  } catch {
+    // Intentionally swallow; webhook should not fail on mirror issues
+  }
 }
 
 async function handleUserLogin(userId: string) {
