@@ -11,8 +11,7 @@ import {
 } from "../components/ui/card";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { Bot, User, Mic, Camera, Send, Loader2 } from "lucide-react";
-import { Input } from "../components/ui/input";
+import { Bot, User, Send, Loader2 } from "lucide-react";
 import { Textarea } from "../components/ui/textarea";
 import { Button } from "../components/ui/button";
 import Markdown from "react-markdown";
@@ -27,19 +26,22 @@ export const ChatBotFunctional = () => {
   const { user, isLoaded: userLoaded } = useUser();
   const { getToken } = useAuth();
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hello! I'm your AI learning assistant. How can I help you with your studies today?"
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Initialize with welcome message
+  useEffect(() => {
+    if (user && messages.length === 0) {
+      setMessages([{
+        role: "assistant",
+        content: "Hello! I'm your AI learning assistant. How can I help you with your studies today?"
+      }]);
+    }
+  }, [user, messages.length]);
 
   // Auto-scroll to the bottom when messages update
   useEffect(() => {
@@ -78,7 +80,7 @@ export const ChatBotFunctional = () => {
       // but still need the placeholder to avoid compiler error.
       const token = await getToken();
 
-      const response = await fetch("/api/chat-temp", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,6 +142,7 @@ export const ChatBotFunctional = () => {
     }
   };
 
+
   // Skip Clerk loading/sign-in UI, but still show loading for the API call
 
   // NOTE: For a real app, you should NOT skip the `!userLoaded` check.
@@ -147,7 +150,7 @@ export const ChatBotFunctional = () => {
     return (
       <div className="flex flex-col h-full max-w-4xl mx-auto items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="text-gray-600">Loading user data...</p>
+        <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
@@ -251,23 +254,6 @@ export const ChatBotFunctional = () => {
             className="flex-1"
             disabled={isLoading}
           />
-          {/* Note: Mic and Camera buttons are kept for UI but are non-functional */}
-          {/* <Button
-            size="icon"
-            variant="outline"
-            type="button"
-            disabled={isLoading}
-          >
-            <Mic className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            type="button"
-            disabled={isLoading}
-          >
-            <Camera className="h-4 w-4" />
-          </Button> */}
           <Button
             size="icon"
             type="submit"

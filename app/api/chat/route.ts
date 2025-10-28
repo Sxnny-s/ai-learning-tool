@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerUser } from '@/lib/supabase/server';
+import { auth } from '@clerk/nextjs/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { ConversationManager } from '@/lib/chat/conversation-manager';
 import {
   withErrorHandling,
@@ -21,9 +22,14 @@ export const POST = async (request: NextRequest) => {
       return NextResponse.json({ error: 'Messages array is required and cannot be empty.' }, { status: 400 });
     }
 
-    // Get authenticated user with proper server-side auth
-    const { user, supabase } = await getServerUser();
-    const userId = user.id;
+    // Get authenticated user with Clerk
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Create Supabase service role client for database operations (bypasses RLS)
+    const supabase = createServiceRoleClient();
 
     // Initialize conversation manager
     const conversationManager = new ConversationManager(supabase, userId);
@@ -49,13 +55,27 @@ export const POST = async (request: NextRequest) => {
       messageLength: userMessage.content.length 
     });
 
+    // Get all user messages from database for AI context
+    const crossConversationContext = await conversationManager.getCrossConversationContext(50);
+    const contextMessages = crossConversationContext.map(msg => ({
+      role: msg.role as 'user' | 'assistant' | 'system',
+      content: msg.content
+    }));
+
+    // Combine all user messages with current messages (avoid duplicates)
+    const allMessages = [...contextMessages, ...messages.slice(-1)]; // Only add the latest message from frontend
+
+    await logInfo(`Retrieved all user messages for AI context`, { 
+      userId, 
+      sessionId,
+      contextMessageCount: contextMessages.length,
+      totalMessageCount: allMessages.length
+    });
+
     // AI response using Vercel AI SDK with OpenAI streaming
     const result = await streamText({
       model: openai('gpt-4o'),
-      messages: messages.map((msg: { role: string; content: string }) => ({
-        role: msg.role as 'user' | 'assistant' | 'system',
-        content: msg.content
-      })),
+      messages: allMessages,
       system: `You are an AI tutor for Resilient Coders students learning full-stack JavaScript development. 
       
       Your role is to:
@@ -131,9 +151,14 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       throw createValidationError('Session ID is required to fetch conversation history.');
     }
 
-    // Get authenticated user
-    const { user, supabase } = await getServerUser();
-    const userId = user.id;
+    // Get authenticated user with Clerk
+    const { userId } = await auth();
+    if (!userId) {
+      throw createValidationError('Authentication required');
+    }
+
+    // Create Supabase service role client for database operations (bypasses RLS)
+    const supabase = createServiceRoleClient();
 
     // Initialize conversation manager
     const conversationManager = new ConversationManager(supabase, userId);

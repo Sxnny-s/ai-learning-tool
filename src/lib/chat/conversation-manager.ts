@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createDatabaseError } from '../middleware/error-handler';
+import { getUserByClerkId } from '../database/user';
 
 type Role = 'user' | 'assistant' | 'system';
 
@@ -21,12 +22,30 @@ export interface ConversationContext {
 export class ConversationManager {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private supabase: SupabaseClient<any>; // Generic database client
-  private userId: string;
+  private clerkUserId: string;
+  private internalUserId: string | null = null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(supabase: SupabaseClient<any>, userId: string) {
+  constructor(supabase: SupabaseClient<any>, clerkUserId: string) {
     this.supabase = supabase;
-    this.userId = userId;
+    this.clerkUserId = clerkUserId;
+  }
+
+  // Helper method to get internal user ID from Clerk ID
+  private async getInternalUserId(): Promise<string> {
+    if (this.internalUserId) {
+      return this.internalUserId;
+    }
+
+    const user = await getUserByClerkId(this.clerkUserId);
+    if (!user) {
+      throw createDatabaseError('User not found in database', { 
+        originalError: new Error(`User with Clerk ID ${this.clerkUserId} not found`) 
+      });
+    }
+
+    this.internalUserId = user.user_id;
+    return this.internalUserId;
   }
 
   async getOrCreateSession(
@@ -34,12 +53,14 @@ export class ConversationManager {
     title?: string,
     sessionType: 'practice' | 'tutoring' | 'review' | 'general' = 'general'
   ): Promise<string> {
+    const userId = await this.getInternalUserId();
+
     if (sessionId) {
       const result = await this.supabase
         .from('chat_sessions')
         .select('id')
         .eq('id', sessionId)
-        .eq('user_id', this.userId)
+        .eq('user_id', userId)
         .single();
 
       if (!result.error && result.data) {
@@ -50,7 +71,7 @@ export class ConversationManager {
     const result = await this.supabase
       .from('chat_sessions')
       .insert({
-        user_id: this.userId,
+        user_id: userId,
         title: title ?? 'Untitled Session',
         session_type: sessionType,
         status: 'active',
@@ -76,12 +97,13 @@ export class ConversationManager {
     options: StoreMessageOptions = {}
   ): Promise<void> {
     const { tokenCount = 0, modelName, responseTimeMs } = options;
+    const userId = await this.getInternalUserId();
 
     // Store message and update session stats in a single transaction
     // The RPC function handles both operations atomically
     const { error: insertError } = await this.supabase.from('chat_messages').insert({
       session_id: sessionId,
-      user_id: this.userId,
+      user_id: userId,
       role,
       content,
       token_count: tokenCount,
@@ -109,11 +131,13 @@ export class ConversationManager {
   }
 
   async getConversationHistory(sessionId: string, limit: number = 20): Promise<ConversationContext> {
+    const userId = await this.getInternalUserId();
+
     const { data, error } = await this.supabase
       .from('chat_messages')
       .select('role, content, token_count')
       .eq('session_id', sessionId)
-      .eq('user_id', this.userId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: true })
       .limit(limit);
 
@@ -128,7 +152,7 @@ export class ConversationManager {
       .from('chat_sessions')
       .select('*')
       .eq('id', sessionId)
-      .eq('user_id', this.userId)
+      .eq('user_id', userId)
       .single();
 
     if (sessionError) {
@@ -141,4 +165,29 @@ export class ConversationManager {
 
     return { messages, totalTokens, session };
   }
+
+
+  // Get recent messages across all conversations for context
+  async getCrossConversationContext(limit: number = 30): Promise<Array<{ role: Role; content: string; session_id: string; created_at: string }>> {
+    const userId = await this.getInternalUserId();
+
+    const { data, error } = await this.supabase
+      .from('chat_messages')
+      .select('role, content, session_id, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw createDatabaseError('Failed to get cross-conversation context', { originalError: error });
+    }
+
+    return (data || []).map(msg => ({
+      role: msg.role as Role,
+      content: msg.content,
+      session_id: msg.session_id,
+      created_at: msg.created_at
+    }));
+  }
+
 }
