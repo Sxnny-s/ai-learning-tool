@@ -59,11 +59,11 @@ export const fetchCohorts = async (): Promise<Cohort[]> => {
       id: cohortData.name, // Use cohort name as ID for frontend compatibility
       name: cohortData.name,
       description: `Cohort with ${cohortData.studentCount} students`,
-      startDate: new Date().toISOString().split('T')[0], // Default date
-      endDate: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 6 months from now
-      status: 'Active' as const,
+      startDate: cohortData.startDate || new Date().toISOString().split('T')[0],
+      endDate: cohortData.endDate || new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: cohortData.isActive === false ? 'Inactive' as const : (cohortData.isActive === true ? 'Active' as const : 'Upcoming' as const),
       studentCount: cohortData.studentCount,
-      instructor: 'TBD', // Default instructor
+      instructor: cohortData.instructor || 'TBD',
       curriculum: [], // Default empty curriculum
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -136,7 +136,14 @@ export const fetchCohortStudents = async (cohortName: string): Promise<CohortStu
  * Expected endpoint: POST /api/admin/cohorts
  * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-export const createCohort = async (cohortData: { name: string; studentIds: string[] }): Promise<{ success: boolean; message: string }> => {
+export const createCohort = async (cohortData: { 
+  name: string; 
+  studentIds: string[];
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  instructor?: string;
+}): Promise<{ success: boolean; message: string }> => {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(`${API_BASE_URL}`, {
@@ -179,22 +186,22 @@ export const createCohort = async (cohortData: { name: string; studentIds: strin
  * Expected endpoint: PUT /api/admin/cohorts/{cohortId}
  * ✅ IMPLEMENTED: Now calls actual API endpoint
  */
-export const updateCohort = async (oldName: string, newName: string): Promise<{ success: boolean; message: string }> => {
+export const updateCohort = async (
+  oldName: string,
+  data: {
+    name?: string;
+    startDate?: string;
+    endDate?: string;
+    isActive?: boolean;
+    instructor?: string;
+  }
+): Promise<{ success: boolean; message: string }> => {
   try {
-    // TODO: Replace with actual API call
-    // const response = await fetch(`${API_BASE_URL}/${cohortId}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(cohortData)
-    // })
-    // if (!response.ok) throw new Error('Failed to update cohort')
-    // return await response.json()
-    
     // ✅ IMPLEMENTED: Now using actual API call
     const response = await fetch(`${API_BASE_URL}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldName, newName })
+      body: JSON.stringify({ oldName, ...data })
     })
     
     if (!response.ok) {

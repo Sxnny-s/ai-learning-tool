@@ -10,6 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 export interface CohortData {
   name: string;
   studentCount: number;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  instructor?: string;
   students: Array<{
     id: string;
     email: string;
@@ -28,30 +32,59 @@ export interface CohortData {
 
 /**
  * Get all unique cohorts with student counts
- * Aggregates data from the profiles table's cohort field
+ * Aggregates data from profiles table and metadata from cohorts table
  */
 export async function getCohorts(): Promise<CohortData[]> {
   try {
     // Get all users grouped by cohort
-    const { data, error } = await supabaseAdmin
+    const { data: profilesData, error: profilesError } = await supabaseAdmin
       .from('profiles')
       .select('cohort, user_id, email, full_name, role, created_at, updated_at, session_count, total_time_seconds, total_topics, achievements, last_session_ended_at, avatar_url')
       .not('cohort', 'is', null) // Only include users with a cohort
       .order('cohort', { ascending: true });
 
-    if (error) {
-      console.error("Supabase error getting cohorts:", error);
-      throw error;
+    if (profilesError) {
+      console.error("Supabase error getting profiles:", profilesError);
+      throw profilesError;
     }
 
-    if (!data || data.length === 0) {
+    // Get cohort metadata from cohorts table
+    const { data: cohortsData, error: cohortsError } = await supabaseAdmin
+      .from('cohorts')
+      .select('name, start_date, end_date, is_active, instructor');
+
+    // If cohorts table doesn't exist or has no data, that's okay - we'll use defaults
+    if (cohortsError) {
+      console.warn("Could not fetch cohort metadata (cohorts table may not exist yet):", cohortsError.message);
+    }
+
+    // Create a map of cohort metadata
+    const cohortMetadataMap = new Map<string, {
+      startDate?: string;
+      endDate?: string;
+      isActive?: boolean;
+      instructor?: string;
+    }>();
+
+    if (cohortsData) {
+      cohortsData.forEach(cohort => {
+        cohortMetadataMap.set(cohort.name, {
+          startDate: cohort.start_date,
+          endDate: cohort.end_date,
+          isActive: cohort.is_active,
+          instructor: cohort.instructor || undefined
+        });
+      });
+    }
+
+    if (!profilesData || profilesData.length === 0) {
       return [];
     }
 
     // Group users by cohort
     const cohortMap = new Map<string, DatabaseUser[]>();
     
-    data.forEach(user => {
+    profilesData.forEach(user => {
       const cohortName = user.cohort!;
       if (!cohortMap.has(cohortName)) {
         cohortMap.set(cohortName, []);
@@ -60,26 +93,34 @@ export async function getCohorts(): Promise<CohortData[]> {
     });
 
     // Convert to CohortData format
-    const cohorts: CohortData[] = Array.from(cohortMap.entries()).map(([cohortName, users]) => ({
-      name: cohortName,
-      studentCount: users.length,
-      students: users.map(user => ({
-        id: user.user_id,
-        email: user.email,
-        fullName: user.full_name || '',
-        role: user.role,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
-        sessionCount: user.session_count,
-        totalTimeSeconds: user.total_time_seconds,
-        totalTopics: user.total_topics,
-        achievements: user.achievements,
-        lastSessionEndedAt: user.last_session_ended_at,
-        avatarUrl: user.avatar_url
-      }))
-    }));
+    const cohorts: CohortData[] = Array.from(cohortMap.entries()).map(([cohortName, users]) => {
+      const metadata = cohortMetadataMap.get(cohortName) || {};
+      
+      return {
+        name: cohortName,
+        studentCount: users.length,
+        startDate: metadata.startDate,
+        endDate: metadata.endDate,
+        isActive: metadata.isActive,
+        instructor: metadata.instructor,
+        students: users.map(user => ({
+          id: user.user_id,
+          email: user.email,
+          fullName: user.full_name || '',
+          role: user.role,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at,
+          sessionCount: user.session_count,
+          totalTimeSeconds: user.total_time_seconds,
+          totalTopics: user.total_topics,
+          achievements: user.achievements,
+          lastSessionEndedAt: user.last_session_ended_at,
+          avatarUrl: user.avatar_url
+        }))
+      };
+    });
 
-    console.log(`Found ${cohorts.length} cohorts with ${data.length} total students`);
+    console.log(`Found ${cohorts.length} cohorts with ${profilesData.length} total students`);
     return cohorts;
   } catch (error) {
     console.error("Error getting cohorts:", error);
@@ -114,32 +155,83 @@ export async function getStudentsByCohort(cohortName: string): Promise<DatabaseU
 
 /**
  * Create a new cohort by assigning students to a cohort name
- * Updates the profiles table to set cohort field for specified students
+ * Creates a record in the cohorts table and updates profiles table for students
  */
-export async function createCohort(cohortName: string, studentIds: string[]): Promise<void> {
+export async function createCohort(data: {
+  name: string;
+  studentIds?: string[];
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  instructor?: string;
+}): Promise<void> {
   try {
-    if (!cohortName || cohortName.trim() === '') {
+    const { name, studentIds = [], startDate, endDate, isActive, instructor } = data;
+
+    if (!name || name.trim() === '') {
       throw new Error('Cohort name is required');
     }
 
-    // Allow creating empty cohorts - only update students if any are provided
+    const trimmedName = name.trim();
+
+    // First, create/update the cohort record in the cohorts table
+    const cohortData: {
+      name: string;
+      start_date?: string;
+      end_date?: string;
+      is_active?: boolean;
+      instructor?: string;
+      // updated_at: string;
+    } = {
+      name: trimmedName,
+      // updated_at: new Date().toISOString()
+    };
+
+    // Add optional fields if provided
+    if (startDate) {
+      cohortData.start_date = startDate;
+    }
+    if (endDate) {
+      cohortData.end_date = endDate;
+    }
+    if (isActive !== undefined) {
+      cohortData.is_active = isActive;
+    }
+    if (instructor) {
+      cohortData.instructor = instructor;
+    }
+
+    // Upsert (insert or update) the cohort record
+    const { error: cohortError } = await supabaseAdmin
+      .from('cohorts')
+      .upsert(cohortData, {
+        onConflict: 'name',
+        ignoreDuplicates: false
+      });
+
+    if (cohortError) {
+      console.error("Supabase error creating cohort record:", cohortError);
+      throw cohortError;
+    }
+
+    // Then, update student profiles if any students are provided
     if (studentIds && studentIds.length > 0) {
-      const { error } = await supabaseAdmin
+      const { error: profilesError } = await supabaseAdmin
         .from('profiles')
         .update({ 
-          cohort: cohortName.trim(),
+          cohort: trimmedName,
           updated_at: new Date().toISOString()
         })
         .in('user_id', studentIds);
 
-      if (error) {
-        console.error("Supabase error creating cohort:", error);
-        throw error;
+      if (profilesError) {
+        console.error("Supabase error updating student profiles:", profilesError);
+        throw profilesError;
       }
 
-      console.log(`Created cohort "${cohortName}" with ${studentIds.length} students`);
+      console.log(`Created cohort "${trimmedName}" with ${studentIds.length} students`);
     } else {
-      console.log(`Created empty cohort "${cohortName}" - no students assigned yet`);
+      console.log(`Created empty cohort "${trimmedName}" - no students assigned yet`);
     }
   } catch (error) {
     console.error("Error creating cohort:", error);
@@ -148,37 +240,85 @@ export async function createCohort(cohortName: string, studentIds: string[]): Pr
 }
 
 /**
- * Update cohort name (rename cohort)
- * Updates all students in the old cohort to the new cohort name
+ * Update cohort information
+ * Updates cohort metadata in cohorts table and optionally renames by updating profiles
  */
-export async function updateCohort(oldCohortName: string, newCohortName: string): Promise<void> {
+export async function updateCohort(
+  oldCohortName: string,
+  data: {
+    name?: string;
+    startDate?: string;
+    endDate?: string;
+    isActive?: boolean;
+    instructor?: string;
+  }
+): Promise<void> {
   try {
     if (!oldCohortName || oldCohortName.trim() === '') {
-      throw new Error('Old cohort name is required');
+      throw new Error('Cohort name is required');
     }
 
-    if (!newCohortName || newCohortName.trim() === '') {
-      throw new Error('New cohort name is required');
+    const cohortName = data.name?.trim() || oldCohortName.trim();
+
+    // Update cohort metadata in cohorts table
+    const cohortData: {
+      name?: string;
+      start_date?: string;
+      end_date?: string;
+      is_active?: boolean;
+      instructor?: string;
+      updated_at: string;
+    } = {
+      updated_at: new Date().toISOString()
+    };
+
+    // Add fields if provided
+    if (data.name) {
+      cohortData.name = cohortName;
+    }
+    if (data.startDate) {
+      cohortData.start_date = data.startDate;
+    }
+    if (data.endDate) {
+      cohortData.end_date = data.endDate;
+    }
+    if (data.isActive !== undefined) {
+      cohortData.is_active = data.isActive;
+    }
+    if (data.instructor) {
+      cohortData.instructor = data.instructor;
     }
 
-    if (oldCohortName === newCohortName) {
-      throw new Error('Old and new cohort names cannot be the same');
+    // Update the cohort record
+    const { error: cohortError } = await supabaseAdmin
+      .from('cohorts')
+      .update(cohortData)
+      .eq('name', oldCohortName);
+
+    if (cohortError) {
+      console.error("Supabase error updating cohort metadata:", cohortError);
+      throw cohortError;
     }
 
-    const { error } = await supabaseAdmin
-      .from('profiles')
-      .update({ 
-        cohort: newCohortName.trim(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('cohort', oldCohortName);
+    // If name changed, also update student profiles
+    if (data.name && data.name.trim() !== oldCohortName.trim()) {
+      const { error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .update({ 
+          cohort: cohortName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('cohort', oldCohortName);
 
-    if (error) {
-      console.error("Supabase error updating cohort:", error);
-      throw error;
+      if (profilesError) {
+        console.error("Supabase error updating student profiles:", profilesError);
+        throw profilesError;
+      }
+
+      console.log(`Updated cohort from "${oldCohortName}" to "${cohortName}"`);
+    } else {
+      console.log(`Updated cohort "${oldCohortName}" metadata`);
     }
-
-    console.log(`Updated cohort from "${oldCohortName}" to "${newCohortName}"`);
   } catch (error) {
     console.error("Error updating cohort:", error);
     throw error;

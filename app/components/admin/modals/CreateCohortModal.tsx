@@ -11,11 +11,20 @@ import {
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
+import { Switch } from "../../ui/switch";
+
+interface CohortFormData {
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  instructor: string;
+}
 
 interface CreateCohortModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (cohortName: string) => void;
+  onSubmit: (data: CohortFormData) => void;
   loading?: boolean;
   error?: string;
 }
@@ -28,7 +37,11 @@ export const CreateCohortModal: React.FC<CreateCohortModalProps> = ({
   error
 }) => {
   const [cohortName, setCohortName] = useState("");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [validationError, setValidationError] = useState("");
+  const [isActive, setIsActive] = useState(false);
+  const [instructor, setInstructor] = useState("Leon Noel");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +74,38 @@ export const CreateCohortModal: React.FC<CreateCohortModalProps> = ({
       return;
     }
 
-    onSubmit(cohortName.trim());
+    // Validate dates
+    if (!startDate) {
+      setValidationError("Start date is required");
+      return;
+    }
+
+    if (!endDate) {
+      setValidationError("End date is required");
+      return;
+    }
+
+    if (new Date(endDate) < new Date(startDate)) {
+      setValidationError("End date must be after start date");
+      return;
+    }
+
+    // Pass all form data to onSubmit
+    onSubmit({
+      name: cohortName.trim(),
+      startDate,
+      endDate,
+      isActive,
+      instructor: instructor.trim() || "Leon Noel"
+    });
   };
 
   const handleClose = () => {
     setCohortName("");
+    setStartDate(new Date().toISOString().split('T')[0]);
+    setEndDate(new Date().toISOString().split('T')[0]);
+    setIsActive(false);
+    setInstructor("Leon Noel");
     setValidationError("");
     onClose();
   };
@@ -100,6 +140,48 @@ export const CreateCohortModal: React.FC<CreateCohortModalProps> = ({
               className={validationError ? "border-red-500" : ""}
               autoFocus
             />
+
+              {/* //  Instructor */}
+              <Label htmlFor="instructor">Instructor</Label>
+              <Input
+                id="instructor"
+                type="text"
+                placeholder="leon Noel"
+                value={instructor}
+                onChange={(e) => setInstructor(e.target.value)}
+                disabled={loading}
+              />
+          <Label htmlFor="startDate">Start Date</Label>
+            <Input
+              id="startDate"
+              type="date"
+              placeholder="e.g., 2025-01-01"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={loading}
+              className={validationError ? "border-red-500" : ""}
+            />
+
+            <Label htmlFor="endDate">End Date</Label>
+            <Input
+              id="endDate"
+              type="date"
+              placeholder="e.g., 2025-01-01"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={loading}
+              className={validationError ? "border-red-500" : ""}
+            />
+
+            <Label htmlFor="isActive">Is Active</Label>
+            <Switch
+              id="isActive"
+              checked={isActive}
+              onCheckedChange={setIsActive}
+              disabled={loading}
+            />
+            
+
             {validationError && (
               <p className="text-sm text-red-600">{validationError}</p>
             )}

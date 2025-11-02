@@ -40,6 +40,10 @@ export async function GET() {
     const mappedCohorts = cohorts.map(cohort => ({
       name: cohort.name,
       studentCount: cohort.studentCount,
+      startDate: cohort.startDate,
+      endDate: cohort.endDate,
+      isActive: cohort.isActive,
+      instructor: cohort.instructor,
       students: cohort.students.map(student => ({
         id: student.id,
         email: student.email,
@@ -85,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, studentIds } = body;
+    const { name, studentIds, startDate, endDate, isActive, instructor } = body;
 
     // Validate request body
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -112,8 +116,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the cohort
-    await createCohort(name.trim(), validStudentIds);
+    // Create the cohort with all fields
+    await createCohort({
+      name: name.trim(),
+      // studentIds: validStudentIds,
+      startDate,
+      endDate,
+      isActive,
+      instructor
+    });
 
     console.log(`Admin ${user.id} created cohort "${name}" with ${validStudentIds.length} students`);
 
@@ -132,7 +143,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * PUT /api/admin/cohorts
- * Update cohort name (rename cohort) (admin only)
+ * Update cohort information (name, dates, active status, instructor) (admin only)
  */
 export async function PUT(request: NextRequest) {
   try {
@@ -146,7 +157,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { oldName, newName } = body;
+    const { oldName, name, startDate, endDate, isActive, instructor } = body;
 
     // Validate request body
     if (!oldName || typeof oldName !== 'string' || oldName.trim() === '') {
@@ -156,28 +167,28 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (!newName || typeof newName !== 'string' || newName.trim() === '') {
+    // Validate that at least one field is being updated
+    if (!name && startDate === undefined && endDate === undefined && isActive === undefined && !instructor) {
       return NextResponse.json(
-        { error: "New cohort name is required and must be a non-empty string" },
+        { error: "At least one field must be provided for update" },
         { status: 400 }
       );
     }
 
-    if (oldName.trim() === newName.trim()) {
-      return NextResponse.json(
-        { error: "Old and new cohort names cannot be the same" },
-        { status: 400 }
-      );
-    }
+    // Update the cohort with provided fields
+    await updateCohort(oldName.trim(), {
+      name: name?.trim(),
+      startDate,
+      endDate,
+      isActive,
+      instructor
+    });
 
-    // Update the cohort
-    await updateCohort(oldName.trim(), newName.trim());
-
-    console.log(`Admin ${user.id} updated cohort from "${oldName}" to "${newName}"`);
+    console.log(`Admin ${user.id} updated cohort "${oldName}"`);
 
     return NextResponse.json({
       success: true,
-      message: `Cohort renamed from "${oldName}" to "${newName}" successfully`
+      message: `Cohort "${oldName}" updated successfully`
     });
   } catch (error) {
     console.error("Error in PUT /api/admin/cohorts:", error);

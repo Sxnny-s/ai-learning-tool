@@ -11,12 +11,25 @@ import {
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
+import { Switch } from "../../ui/switch";
+
+interface CohortFormData {
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  instructor: string;
+}
 
 interface EditCohortModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (newCohortName: string) => void;
+  onSubmit: (data: CohortFormData) => void;
   currentCohortName: string;
+  currentStartDate?: string;
+  currentEndDate?: string;
+  currentIsActive?: boolean;
+  currentInstructor?: string;
   loading?: boolean;
   error?: string;
 }
@@ -26,16 +39,28 @@ export const EditCohortModal: React.FC<EditCohortModalProps> = ({
   onClose,
   onSubmit,
   currentCohortName,
+  currentStartDate,
+  currentEndDate,
+  currentIsActive,
+  currentInstructor,
   loading = false,
   error
 }) => {
   const [cohortName, setCohortName] = useState("");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isActive, setIsActive] = useState(false);
+  const [instructor, setInstructor] = useState("");
   const [validationError, setValidationError] = useState("");
 
-  // Update the input when currentCohortName changes
+  // Update all fields when props change
   useEffect(() => {
     setCohortName(currentCohortName);
-  }, [currentCohortName]);
+    if (currentStartDate) setStartDate(currentStartDate);
+    if (currentEndDate) setEndDate(currentEndDate);
+    if (currentIsActive !== undefined) setIsActive(currentIsActive);
+    if (currentInstructor) setInstructor(currentInstructor);
+  }, [currentCohortName, currentStartDate, currentEndDate, currentIsActive, currentInstructor]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,17 +93,38 @@ export const EditCohortModal: React.FC<EditCohortModalProps> = ({
       return;
     }
 
-    // Check if the name actually changed
-    if (cohortName.trim() === currentCohortName) {
-      setValidationError("Please enter a different name");
+    // Validate dates
+    if (!startDate) {
+      setValidationError("Start date is required");
       return;
     }
 
-    onSubmit(cohortName.trim());
+    if (!endDate) {
+      setValidationError("End date is required");
+      return;
+    }
+
+    if (new Date(endDate) < new Date(startDate)) {
+      setValidationError("End date must be after start date");
+      return;
+    }
+
+    // Pass all form data to onSubmit
+    onSubmit({
+      name: cohortName.trim(),
+      startDate,
+      endDate,
+      isActive,
+      instructor: instructor.trim() || ""
+    });
   };
 
   const handleClose = () => {
     setCohortName(currentCohortName);
+    if (currentStartDate) setStartDate(currentStartDate);
+    if (currentEndDate) setEndDate(currentEndDate);
+    if (currentIsActive !== undefined) setIsActive(currentIsActive);
+    if (currentInstructor) setInstructor(currentInstructor);
     setValidationError("");
     onClose();
   };
@@ -95,12 +141,13 @@ export const EditCohortModal: React.FC<EditCohortModalProps> = ({
         <DialogHeader>
           <DialogTitle>Edit Cohort</DialogTitle>
           <DialogDescription>
-            Update the name of the cohort &quot;{currentCohortName}&quot;.
+            Update the details for the cohort &quot;{currentCohortName}&quot;.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+
             <Label htmlFor="cohortName">Cohort Name</Label>
             <Input
               id="cohortName"
@@ -112,6 +159,48 @@ export const EditCohortModal: React.FC<EditCohortModalProps> = ({
               className={validationError ? "border-red-500" : ""}
               autoFocus
             />
+
+            <Label htmlFor="instructor">Instructor</Label>
+            <Input
+              id="instructor"
+              type="text"
+              placeholder="e.g., John Doe"
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              disabled={loading}
+            />
+
+            <Label htmlFor="startDate">Start Date</Label>
+            <Input
+              id="startDate"
+              type="date"
+              placeholder="e.g., 2025-01-01"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={loading}
+              className={validationError ? "border-red-500" : ""}
+            />
+
+            <Label htmlFor="endDate">End Date</Label>
+            <Input
+              id="endDate"
+              type="date"
+              placeholder="e.g., 2025-01-01"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={loading}
+              className={validationError ? "border-red-500" : ""}
+            />
+
+            <Label htmlFor="isActive">Is Active</Label>
+            <Switch
+              id="isActive"
+              checked={isActive}
+              onCheckedChange={setIsActive}
+              disabled={loading}
+            />
+
+
             {validationError && (
               <p className="text-sm text-red-600">{validationError}</p>
             )}
@@ -129,11 +218,7 @@ export const EditCohortModal: React.FC<EditCohortModalProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={
-                loading ||
-                !cohortName.trim() ||
-                cohortName.trim() === currentCohortName
-              }
+              disabled={loading || !cohortName.trim()}
               className="bg-red-600 hover:bg-red-700"
             >
               {loading ? "Updating..." : "Update Cohort"}

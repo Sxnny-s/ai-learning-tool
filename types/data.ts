@@ -393,7 +393,7 @@ export interface Cohort {
   description: string;
   startDate: string;
   endDate: string;
-  status: 'Active' | 'Completed' | 'Upcoming';
+  status: 'Active' | 'Inactive' | 'Completed' | 'Upcoming';
   studentCount: number;
   instructor: string;
   curriculum: string[];

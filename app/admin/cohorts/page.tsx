@@ -113,24 +113,37 @@ const CohortsPage: React.FC = () => {
     setCreateCohortModalOpen(true);
   };
 
-  const handleCreateCohortSubmit = async (cohortName: string) => {
+  const handleCreateCohortSubmit = async (cohortData: {
+    name: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    instructor: string;
+  }) => {
     try {
       setModalLoading(true);
       setModalError("");
 
-      // Create empty cohort - students can be added later
-      await createCohort({ name: cohortName, studentIds: [] });
+      // Create cohort with all provided data - students can be added later
+      await createCohort({ 
+        name: cohortData.name, 
+        studentIds: [],
+        startDate: cohortData.startDate,
+        endDate: cohortData.endDate,
+        isActive: cohortData.isActive,
+        instructor: cohortData.instructor
+      });
 
       // Immediately add the new cohort to local state (Option 3 fix)
       const newCohort: Cohort = {
         id: Date.now(), // Generate unique numeric ID
-        name: cohortName,
-        description: "",
-        startDate: new Date().toISOString(),
-        endDate: "",
-        status: "Active",
+        name: cohortData.name,
+        description: `Cohort starting ${cohortData.startDate}`,
+        startDate: cohortData.startDate,
+        endDate: cohortData.endDate,
+        status: cohortData.isActive ? "Active" : "Upcoming",
         studentCount: 0,
-        instructor: "",
+        instructor: cohortData.instructor,
         curriculum: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -156,23 +169,36 @@ const CohortsPage: React.FC = () => {
     }
   };
 
-  const handleEditCohortSubmit = async (newCohortName: string) => {
+  const handleEditCohortSubmit = async (cohortData: {
+    name: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    instructor: string;
+  }) => {
     if (!editingCohort) return;
 
     try {
       setModalLoading(true);
       setModalError("");
 
-      await updateCohort(editingCohort.name, newCohortName);
-
+      // Update all cohort fields via API
+      await updateCohort(editingCohort.name, {
+        name: cohortData.name,
+        startDate: cohortData.startDate,
+        endDate: cohortData.endDate,
+        isActive: cohortData.isActive,
+        instructor: cohortData.instructor
+      });
+      
       // Refresh cohorts list
       const updatedCohorts = await fetchCohorts();
       setCohorts(updatedCohorts);
 
       // Update selected cohort if it was the one being edited
-      if (selectedCohort?.name === editingCohort.name) {
+      if (selectedCohort?.name === editingCohort.name || selectedCohort?.name === cohortData.name) {
         const updatedCohort = updatedCohorts.find(
-          (c) => c.name === newCohortName
+          (c) => c.name === cohortData.name
         );
         if (updatedCohort) {
           setSelectedCohort(updatedCohort);
@@ -632,6 +658,10 @@ const CohortsPage: React.FC = () => {
         }}
         onSubmit={handleEditCohortSubmit}
         currentCohortName={editingCohort?.name || ""}
+        currentStartDate={editingCohort?.startDate}
+        currentEndDate={editingCohort?.endDate}
+        currentIsActive={editingCohort?.status === "Active"}
+        currentInstructor={editingCohort?.instructor}
         loading={modalLoading}
         error={modalError}
       />
