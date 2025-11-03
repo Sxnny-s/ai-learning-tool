@@ -10,10 +10,8 @@ const navigation = [
   { name: "Dashboard", href: "/admin", icon: IconHome },
   { name: "Students", href: "/admin/students", icon: IconUsers },
   { name: "Cohorts", href: "/admin/cohorts", icon: IconSchool },
-  { name: "Lessons", href: "/admin/lessons", icon: IconBook },
-  { name: "Conversations", href: "/admin/conversations", icon: IconMessageCircle },
   { name: "Analytics", href: "/admin/analytics", icon: IconChartBar },
-  { name: "Chatbot", href: "/admin/chatbot", icon: IconMessageChatbot },
+
 ]
 
 interface Props {

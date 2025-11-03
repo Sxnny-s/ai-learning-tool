@@ -54,6 +54,7 @@ import {
   YAxis
 } from "recharts";
 import { ChatBotFunctional } from "@/app/chat/OpenAIChatBot";
+import { DifficultyFeedbackCard } from "../components/student/DifficultyFeedbackCard";
 
 
 const chartData = [
@@ -178,6 +179,9 @@ const StudentDashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Difficulty Feedback Form */}
+          <DifficultyFeedbackCard />
         </TabsContent>
 
         <TabsContent value="students" className="space-y-6">
