@@ -37,7 +37,27 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      {/*
+        Hydration-safe root.
+        - suppressHydrationWarning: avoids a brief class mismatch on first load.
+        - Pre-paint script sets the theme class before the page paints.
+        - Order: cookie "theme" → localStorage "theme" → system preference.
+        - Ensures exactly one of "light" or "dark" is on <html> at first paint.
+      */}
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {/*
+            Pre-paint script.
+            - Runs before first paint to prevent a flash.
+            - Wrapped in try/catch so it never breaks the page.
+          */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                "(()=>{try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme: dark)');var mc=document.cookie.match(/(?:^|; )theme=([^;]+)/)||[];var c=mc[1]?decodeURIComponent(mc[1]):null;var t=c||localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=m.matches?'dark':'light';}d.classList.remove('light','dark');d.classList.add(t);}catch(e){}})();",
+            }}
+          />
+        </head>
         <body className={`font-sans ${inter.variable} antialiased transition-colors duration-300 ease-in-out`}>
           <ThemeProvider>
           <header className="flex justify-end items-center p-4 gap-4 h-16">

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { Sun, Moon, Monitor } from "lucide-react";
@@ -16,8 +16,14 @@ export function ThemeToggle() {
   const [expanded, setExpanded] = useState(false);
   const [dir, setDir] = useState<"left" | "right">("left"); // auto-flip on small viewports
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const active = useMemo(() => (theme ?? resolvedTheme ?? "system"), [theme, resolvedTheme]);
+  // Show a neutral shell until the component is mounted to avoid
+  // SSR/client icon or label mismatch.
+  useEffect(() => setMounted(true), []);
+
+  // Compute theme-dependent values only after mount.
+  const active = mounted ? (theme ?? resolvedTheme ?? "system") : "system";
 
   const items: Array<{
     key: "light" | "dark" | "system";
@@ -29,7 +35,13 @@ export function ThemeToggle() {
     { key: "system", label: "System", icon: <Monitor className="h-4 w-4" /> },
   ];
 
-  const activeIcon = active === "dark" ? <Moon className="h-4 w-4" /> : active === "light" ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />;
+  const activeIcon = mounted
+    ? active === "dark"
+      ? <Moon className="h-4 w-4" />
+      : active === "light"
+        ? <Sun className="h-4 w-4" />
+        : <Monitor className="h-4 w-4" />
+    : null;
 
   function handleEnter() {
     // Compute available space; flip to right if not enough space on the left
@@ -52,6 +64,17 @@ export function ThemeToggle() {
     setExpanded(true);
   }
 
+  // Neutral shell on SSR and first hydration tick: no theme-specific icon/label.
+  if (!mounted) {
+    return (
+      <div className="relative inline-flex items-center">
+        <Button type="button" variant="ghost" size="icon" aria-label="Theme" className="shrink-0">
+          <span className="inline-block h-4 w-4 opacity-0" aria-hidden />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={rootRef}
@@ -59,12 +82,16 @@ export function ThemeToggle() {
       onMouseEnter={handleEnter}
       onMouseLeave={() => setExpanded(false)}
     >
-      {/* Collapsed trigger displays current theme */}
-      <Button variant="ghost" size="icon" aria-label={`Theme: ${active}`} className="shrink-0">
+      {/*
+        Collapsed trigger.
+        - added type="button" to avoid form submits.
+        - Shows the current theme icon. No navigation or refresh.
+      */}
+      <Button type="button" variant="ghost" size="icon" aria-label={`Theme: ${active}`} className="shrink-0">
         {activeIcon}
       </Button>
 
-      {/* Hover-revealed options */}
+      {/* Hover options. Client-only to avoid hydration issues. */}
       <div className="relative">
         <AnimatePresence>
           {expanded && (
@@ -88,6 +115,7 @@ export function ThemeToggle() {
                   size="icon"
                   aria-pressed={active === it.key}
                   aria-label={it.label}
+                  type="button"
                   onClick={() => setTheme(it.key)}
                   className="h-8 w-8"
                 >
