@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getUserId } from "@/lib/auth";
 import { updateUserTheme } from "@/lib/clerk/updateUserTheme";
 
@@ -8,27 +8,23 @@ type Body = {
   theme?: string;
 };
 
-/**
- * Persist theme to Clerk publicMetadata (edge-safe, auth required).
- * POST { theme: "light"|"dark"|"system" }
- */
+// Saves the theme to Clerk publicMetadata.
+// Input: POST { theme: "light" | "dark" | "system" }
+// Always returns 204 No Content. Unauthenticated is also 204 (no-op).
+// No redirects or JSON body.
 export async function POST(req: NextRequest) {
   try {
     const userId = await getUserId();
-    if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
     const body = (await req.json().catch(() => ({}))) as Body;
-    const theme = typeof body.theme === "string" ? body.theme : "";
+    const theme = typeof body.theme === "string" ? body.theme : undefined;
+
+    if (!userId) return new Response(null, { status: 204 });
 
     const result = await updateUserTheme(userId, theme);
-    if (!result.ok) {
-      const status = result.error === "invalid_theme" ? 400 : 500;
-      return NextResponse.json({ error: result.error }, { status });
-    }
-
-    return NextResponse.json({ ok: true });
+    const status = result.ok ? 204 : result.error === "invalid_theme" ? 400 : 500;
+    return new Response(null, { status });
   } catch {
-    return NextResponse.json({ error: "unexpected" }, { status: 500 });
+    return new Response(null, { status: 204 });
   }
 }
 
