@@ -2,6 +2,65 @@
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          user_id: string;
+          clerk_user_id: string;
+          email: string;
+          role: 'student' | 'admin';
+          full_name: string | null;
+          created_at: string;
+          updated_at: string;
+          cohort: string | null;
+          session_count: number;
+          total_time_seconds: number;
+          total_topics: string[];
+          achievements: unknown[];
+          last_session_ended_at: string | null;
+          avatar_url: string | null;
+          auth_provider: string;
+          external_auth_id: string | null;
+          theme_preference: 'light' | 'dark' | 'system' | null;
+        };
+        Insert: {
+          user_id?: string;
+          clerk_user_id: string;
+          email: string;
+          role?: 'student' | 'admin';
+          full_name?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          cohort?: string | null;
+          session_count?: number;
+          total_time_seconds?: number;
+          total_topics?: string[];
+          achievements?: unknown[];
+          last_session_ended_at?: string | null;
+          avatar_url?: string | null;
+          auth_provider?: string;
+          external_auth_id?: string | null;
+          theme_preference?: 'light' | 'dark' | 'system' | null;
+        };
+        Update: {
+          user_id?: string;
+          clerk_user_id?: string;
+          email?: string;
+          role?: 'student' | 'admin';
+          full_name?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          cohort?: string | null;
+          session_count?: number;
+          total_time_seconds?: number;
+          total_topics?: string[];
+          achievements?: unknown[];
+          last_session_ended_at?: string | null;
+          avatar_url?: string | null;
+          auth_provider?: string;
+          external_auth_id?: string | null;
+          theme_preference?: 'light' | 'dark' | 'system' | null;
+        };
+      };
       users: {
         Row: {
           id: string;

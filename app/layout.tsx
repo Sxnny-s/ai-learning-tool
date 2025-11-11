@@ -13,6 +13,12 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
+import { ThemeProvider } from "./components/theme-provider";
+import ThemeToggle from "./components/ThemeToggle";
+
+// Vercel-friendly runtime hints for App Router
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,8 +37,29 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={`font-sans ${inter.variable} antialiased`}>
+      {/*
+        Hydration-safe root.
+        - suppressHydrationWarning: avoids a brief class mismatch on first load.
+        - Pre-paint script sets the theme class before the page paints.
+        - Order: cookie "theme" → localStorage "theme" → system preference.
+        - Ensures exactly one of "light" or "dark" is on <html> at first paint.
+      */}
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {/*
+            Pre-paint script.
+            - Runs before first paint to prevent a flash.
+            - Wrapped in try/catch so it never breaks the page.
+          */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                "(()=>{try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme: dark)');var mc=document.cookie.match(/(?:^|; )theme=([^;]+)/)||[];var c=mc[1]?decodeURIComponent(mc[1]):null;var t=c||localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=m.matches?'dark':'light';}d.classList.remove('light','dark');d.classList.add(t);}catch(e){}})();",
+            }}
+          />
+        </head>
+        <body className={`font-sans ${inter.variable} antialiased transition-colors duration-300 ease-in-out`}>
+          <ThemeProvider>
           <header className="flex justify-end items-center p-4 gap-4 h-16">
             <SignedOut>
                 <SignInButton mode="modal">
@@ -69,6 +96,10 @@ export default function RootLayout({
                 </div>
               </SignUpButton>
             </SignedOut>
+            {/* Theme toggle (left of avatar) */}
+            <Suspense fallback={null}>
+              <ThemeToggle />
+            </Suspense>
             <SignedIn>
               <UserButton />
             </SignedIn>
@@ -78,6 +109,7 @@ export default function RootLayout({
             <Toaster />
             <Analytics />
           </Suspense>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

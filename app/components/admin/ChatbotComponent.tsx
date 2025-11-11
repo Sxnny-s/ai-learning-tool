@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 
 interface Message {
@@ -15,6 +15,11 @@ export default function ChatbotComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  // Initialize with empty messages
+  useEffect(() => {
+    setMessages([]);
+  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +51,7 @@ export default function ChatbotComponent() {
         throw new Error('Authentication token not available. Please sign in again.');
       }
       
-      const response = await fetch('/api/chat-temp', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,6 +114,7 @@ export default function ChatbotComponent() {
   const handleStop = () => {
     setIsLoading(false);
   };
+
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
